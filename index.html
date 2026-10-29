@@ -265,6 +265,12 @@ details.how ul{margin:10px 0 4px;padding-left:18px;color:var(--muted);font-size:
       <button class="btn-gold" id="btnGolden" disabled>打开</button>
       <button class="btn-gold-sec" id="btnGoldenAll" disabled>全部打开</button>
     </div>
+    <div class="golden-bar" id="bfBar">
+      <span class="g-title" id="bfTitle">🔥 战火锻造高级补给箱</span>
+      <span class="g-count" id="bfCount">×0</span>
+      <button class="btn-gold" id="btnBF" disabled>打开</button>
+      <button class="btn-gold-sec" id="btnBFAll" disabled>全部打开</button>
+    </div>
   </section>
 
   <section class="panel">
@@ -295,6 +301,7 @@ details.how ul{margin:10px 0 4px;padding-left:18px;color:var(--muted);font-size:
       <li id="how5">价格为去年价格 — 15.11 价格尚未公布。</li>
       <li id="how6">登录后通过 Wargaming 获取你的港口，按确切 ID 匹配舰船；不同版本分别计算。金色舰船不按登录过滤。</li>
       <li id="how7">概率来自封闭测试 15.11 博客 — 正式上线前可能调整。</li>
+      <li id="how8">集齐金色礼物全部 7 艘船后，金色箱的出船奖励改为战火锻造高级补给箱；锻造箱 50% 出新泽西 BF，第 3 个保底必出，已有时改为 2,500 钢铁。</li>
     </ul>
   </details>
 </div>
@@ -309,7 +316,7 @@ try{ var _sl=localStorage.getItem(LANG_KEY); if(_sl==='en'||_sl==='zh') LANG=_sl
 function L(en,zh){ return LANG==='zh'? zh : en; }
 function TX(en,zh){ return {en:en, zh:zh}; }
 function txt(o){ if(o==null) return ''; if(typeof o==='string') return o; return o[LANG]||o.en||''; }
-function grpLabel(g){ var m={rare:['Rare','稀有'],mid:['Mid','中级'],common:['Common','普通'],golden:['Golden Gift','金色礼物补给箱'],legacy:['Golden / Legacy','金色 / 经典']}; var p=m[g]; return p? L(p[0],p[1]) : g; }
+function grpLabel(g){ var m={rare:['Rare','稀有'],mid:['Mid','中级'],common:['Common','普通'],golden:['Golden Gift','金色礼物补给箱'],legacy:['Golden / Legacy','金色 / 经典'],bf:['Battle Forged','战火锻造']}; var p=m[g]; return p? L(p[0],p[1]) : g; }
 function typeLabel(t){ return LANG==='zh'? (t.labelZh||t.label) : t.label; }
 function typeShort(t){ return LANG==='zh'? (t.shortZh||t.short) : t.short; }
 var COAL_NAMES={'Marco Polo':1,'Z-44':1,'Tulsa':1};
@@ -319,7 +326,7 @@ var SHIP_ZH={
 3740218576:'孙逸仙',3540956624:'库兹马·米宁',3540956912:'费兰特·贡扎加',3761125136:'格罗宁根',3656333264:'猩红雷霆',3750639600:'哈尔福德',3762206032:'格劳上将',3541972432:'敏捷',3741267408:'博罗季诺',3762271984:'阿奎拉',3531519792:'威斯巴登',3741234992:'席尔',3541972944:'爱斯基摩',3730749392:'汉普郡',3762206672:'柴郡',3762272208:'不挠',3730782192:'星座',3761157328:'大连',3761124656:'维洛斯',3540989360:'维多利亚',3761190352:'纳瓦林',3540924112:'峰云',3519985360:'铃谷',3719247568:'剑',3750704880:'朱塞佩·威尔第',3761190640:'马可·波罗',3750639408:'Z-44',3540957136:'阿伯丁',3540957168:'剑桥',3750672368:'塔尔萨',3530470608:'包头',3530471408:'沃思堡',3551409520:'卡尤加',3551475120:'凯旋',3540989744:'弗里德里希·卡尔',3542004944:'纳莱',3762173232:'飓风',3542037808:'图尔古特·雷伊斯',3542005040:'卡罗尔一世',3552490832:'阿吉雷',3762206128:'努曼西亚',3761681872:'S-189',3730748880:'彼得·巴格拉季翁',3741234640:'奥恰科夫',3531486928:'时雨',4276008656:'利根',3542038256:'马尔坎托尼奥·科隆纳',3751687984:'Z-35',3541972816:'奥什',3730782032:'佛兰德',3761682384:'联盟',3751720912:"虎'59",3552524240:'威尔士亲王',
 3720296272:'皮卡第',3542071248:'忒修斯',3763254608:'七月九日',3763287408:'育空',3752736208:"塔什干'39",3763221968:'列宁格勒',3543086544:'阿尔汉格尔斯克',3762238928:'波尔塔瓦',3763222224:'夕立',3752769232:'摩耶',3763254992:'十胜',3752802000:'日向',3763287760:'爱鹰',3763222256:'FR25',3658397424:'戈里齐亚',3752769264:'弗朗切斯科·费鲁乔',3763255024:'阿布鲁齐公爵',3752769328:'魏玛',3763255088:'慕尼黑',3763287856:'沙恩霍斯特',3763255120:'土伦',3763287888:'斯特拉斯堡',3543021520:"朱庇特'42",3522115536:'皇家君主',3543087056:'罗德尼',3731830736:'科林伍德',3763288016:'胡德',3668883440:'博伊西',3763255280:'印第安纳波利斯',4288591856:'亚特兰大',3553572848:'加利福尼亚',3752802288:'佛罗里达',3543577808:"新中国'14",3764303152:'埃利',3764270416:'茹鲁阿',3753817456:'迈索尔',3659445712:'马卡罗夫上将',3743364816:'伊势',3764336336:'陆奥',3764369232:'贝亚恩',3544102864:"猎户座'44",3764271088:'莫纳汉',3765384528:'里约热内卢',3765319120:'猎人',3765351888:'红色克里米亚',3765352400:'埃克塞特',3765319664:'希尔',4264441840:'西姆斯'
 };
-var GOLDEN_ZH={'Latouche-Tréville':'拉图什·特雷维尔','Rodina':'祖国','Tōgasa':'托加萨','Rodina G':'祖国 G','Tōgasa G':'托加萨 G','Somers G':'索默斯 G','Tywysog Cymru':'威尔士亲王（威尔士语）'};
+var GOLDEN_ZH={'Latouche-Tréville':'拉图什·特雷维尔','Rodina':'祖国','Tōgasa':'托加萨','Rodina G':'祖国 G','Tōgasa G':'托加萨 G','Somers G':'索默斯 G','Tywysog Cymru':'威尔士亲王（威尔士语）','New Jersey BF':'新泽西 BF'};
 function shipZhName(s){ if(!s) return ''; if(s.zh) return s.zh; if(s.ship_id && SHIP_ZH[s.ship_id]) return SHIP_ZH[s.ship_id]; if(s.name && GOLDEN_ZH[s.name]) return GOLDEN_ZH[s.name]; return s.name||''; }
 function shipDisplayHtml(s){ if(!s) return ''; var en=s.name||''; if(LANG!=='zh') return escapeHtml(en); var zh=shipZhName(s); if(!zh||zh===en) return escapeHtml(en); return escapeHtml(zh)+' <small class="ship-en-sub">'+escapeHtml(en)+'</small>'; }
 /* Full 15.11 Santa pool — [name, tier, ship_id] */
@@ -545,7 +552,7 @@ function fmtEff(p){
 var BONUS_TYPES=[['Credits','银币'],['Ship XP','舰船经验'],['Commander XP','指挥官经验'],['Free XP','全局经验']];
 function pickBonus(){ var p=BONUS_TYPES[Math.floor(Math.random()*BONUS_TYPES.length)]; return {en:p[0], zh:p[1]}; }
 function bonusText(n, kindEn, kindZh, b){ return TX(n+'× '+kindEn+' bonus ('+b.en+')', n+'× '+kindZh+'经济加成（'+b.zh+'）'); }
-function emptyRewards(){ return {doubloons:0,coal:0,credits:0,premium:0,eliteXP:0,rp:0,steel:0,portSlots:0,goldenWon:0,uncommon:0,rare:0,epic:0,signals:0}; }
+function emptyRewards(){ return {doubloons:0,coal:0,credits:0,premium:0,eliteXP:0,rp:0,steel:0,portSlots:0,goldenWon:0,bfWon:0,uncommon:0,rare:0,epic:0,legendary:0,signals:0}; }
 var GOLDEN_NORMAL=['Latouche-Tréville','Rodina','Tōgasa'];
 var GOLDEN_LEGACY=['Rodina G','Tōgasa G','Somers G','Tywysog Cymru'];
 var GOLDEN_TYPE={key:'golden', label:'Golden Gift', short:'Golden', labelZh:'金色礼物补给箱', shortZh:'金色', pity:10};
@@ -617,12 +624,18 @@ function pickGoldenShip(){
   for(var i=0;i<entries.length;i++){ r-=entries[i].w; if(r<=0){ chosen=entries[i]; break; } }
   return chosen.g==='golden'? takeFromPool(session.goldenNormal,'golden') : takeFromPool(session.goldenLegacy,'legacy');
 }
+var BF_TYPE={key:'bf', label:'Battle Forged Premium', short:'BF', labelZh:'战火锻造高级补给箱', shortZh:'锻造', pity:3};
+function bfDropOutcome(){
+  session.rewards.bfWon++; session.bfInventory++;
+  return {text:TX('Battle Forged Premium container','战火锻造高级补给箱'), bf:true};
+}
 function goldenTable(){ return [
   {p:0.60, make:function(){ session.rewards.epic+=7; return {text:bonusText(7,'Epic','史诗',pickBonus())}; }},
   {p:0.20, make:function(){ session.rewards.rp+=3750; return {text:TX('3,750 Research Points','3,750 研发点')}; }},
   {p:0.10, make:function(){ session.rewards.steel+=3000; return {text:TX('3,000 Steel','3,000 钢铁')}; }},
   {p:session.goldenNormal.length? 0.09999 : 0, make:function(){ var s=takeFromPool(session.goldenNormal,'golden'); return s? {ship:s} : {text:bonusText(7,'Epic','史诗',pickBonus())}; }},
-  {p:session.goldenLegacy.length? 0.00001 : 0, make:function(){ var s=takeFromPool(session.goldenLegacy,'legacy'); return s? {ship:s} : {text:TX('3,000 Steel','3,000 钢铁')}; }}
+  {p:session.goldenLegacy.length? (session.goldenNormal.length? 0.00001 : 0.10) : 0, make:function(){ var s=takeFromPool(session.goldenLegacy,'legacy'); return s? {ship:s} : {text:TX('3,000 Steel','3,000 钢铁')}; }},
+  {p:(!session.goldenNormal.length && !session.goldenLegacy.length)? 0.10 : 0, make:bfDropOutcome}
 ];}
 function pickShipByEff(type){
   var eff=effectiveProbs(type, session.pools);
@@ -647,7 +660,8 @@ function resetSession(){
   var pools=buildPools();
   session={pools:pools, initial:{rare:pools.rare.length,mid:pools.mid.length,common:pools.common.length}, log:[], acquired:[], counters:{gift:0,mega:0,ultra:0}, openedByType:{gift:0,mega:0,ultra:0}, total:0, logSeq:0,
     rewards:emptyRewards(), goldenInventory:0, goldenOpened:0, goldenShipLess:0,
-    goldenNormal:GOLDEN_NORMAL.slice(), goldenLegacy:GOLDEN_LEGACY.slice()};
+    goldenNormal:GOLDEN_NORMAL.slice(), goldenLegacy:GOLDEN_LEGACY.slice(),
+    bfInventory:0, bfOpened:0, bfNoNj:0, bfNjOwned:false};
   renderSession();
 }
 function rollOne(){
@@ -692,11 +706,40 @@ function rollGoldenOne(){
   } else {
     outcome=rollTable(goldenTable());
   }
-  var entry={n:++session.logSeq, type:GOLDEN_TYPE, ship:outcome.ship||null, forced:forced && !!outcome.ship, headline:outcome.text||'', goldenWin:false, extras:[], golden:true};
+  var entry={n:++session.logSeq, type:GOLDEN_TYPE, ship:outcome.ship||null, forced:forced && !!outcome.ship, headline:outcome.text||'', goldenWin:false, bfWin:!!outcome.bf, extras:[], golden:true};
   if(entry.ship){ session.acquired.push(entry.ship); session.goldenShipLess=0; }
+  else if(outcome.bf){ session.goldenShipLess=0; }
   else { session.goldenShipLess++; }
   session.log.unshift(entry);
   return entry;
+}
+function rollBFOne(){
+  if(session.bfInventory<=0) return null;
+  session.bfInventory--; session.bfOpened++;
+  var njOwned=!!session.bfNjOwned;
+  var forced=!njOwned && (session.bfNoNj+1>=BF_TYPE.pity);
+  var b1=pickBonus(); session.rewards.legendary+=3;
+  var b3=pickBonus(); session.rewards.legendary+=3;
+  var ship=null, head='';
+  if(forced){
+    ship={name:'New Jersey BF', zh:'新泽西 BF', tier:9, group:'bf'};
+  } else {
+    var r=Math.random();
+    if(r<0.25){ session.rewards.rp+=10000; head=TX('10,000 Research Points','10,000 研发点'); }
+    else if(r<0.50){ session.rewards.steel+=5000; head=TX('5,000 Steel','5,000 钢铁'); }
+    else if(njOwned){ session.rewards.steel+=2500; head=TX('2,500 Steel','2,500 钢铁'); }
+    else { ship={name:'New Jersey BF', zh:'新泽西 BF', tier:9, group:'bf'}; }
+  }
+  var entry={n:++session.logSeq, type:BF_TYPE, ship:ship, forced:forced && !!ship, headline:head, goldenWin:false, extras:[TX('Slot 1: 3× Legendary bonus ('+b1.en+')','槽位 1：3× 传奇经济加成（'+b1.zh+'）'), TX('Slot 3: 3× Legendary bonus ('+b3.en+')','槽位 3：3× 传奇经济加成（'+b3.zh+'）')], bfRoll:true};
+  if(ship){ session.acquired.push(ship); session.bfNjOwned=true; session.bfNoNj=0; }
+  else if(!njOwned){ session.bfNoNj++; }
+  session.log.unshift(entry);
+  return entry;
+}
+function rollBFBatch(){
+  var guard=0;
+  while(session.bfInventory>0 && guard<1000){ rollBFOne(); guard++; }
+  renderSession(true);
 }
 function rollGoldenBatch(){
   var guard=0;
@@ -733,6 +776,10 @@ function renderSession(pop){
     var gb=document.getElementById('goldenBar'); if(gb) gb.classList.toggle('has', session.goldenInventory>0);
     var b1=document.getElementById('btnGolden'); if(b1) b1.disabled=session.goldenInventory<=0;
     var b2=document.getElementById('btnGoldenAll'); if(b2) b2.disabled=session.goldenInventory<=0;
+    var bc=document.getElementById('bfCount'); if(bc) bc.textContent='×'+session.bfInventory;
+    var bb=document.getElementById('bfBar'); if(bb) bb.classList.toggle('has', session.bfInventory>0);
+    var bf1=document.getElementById('btnBF'); if(bf1) bf1.disabled=session.bfInventory<=0;
+    var bf2=document.getElementById('btnBFAll'); if(bf2) bf2.disabled=session.bfInventory<=0;
   })();
   // Rewards collected panel
   (function(){
@@ -741,6 +788,7 @@ function renderSession(pop){
     var tiles=[
       [L('Doubloons won','已赢达布隆'), fmtNum(r.doubloons), L('offsets your spend','抵扣花费')],
       [L('Golden Gifts','金色礼物补给箱'), fmtNum(r.goldenWon), ''],
+      [L('Battle Forged','战火锻造箱'), fmtNum(r.bfWon), ''],
       [L('Coal','煤炭'), fmtNum(r.coal), ''],
       [L('Credits','银币'), fmtNum(r.credits), ''],
       [L('Premium time','高级账号'), fmtNum(r.premium)+L(' days',' 天'), ''],
@@ -751,6 +799,7 @@ function renderSession(pop){
       [L('Uncommon bonuses','普通经济加成'), fmtNum(r.uncommon), L('total items','总数量')],
       [L('Rare bonuses','稀有经济加成'), fmtNum(r.rare), L('total items','总数量')],
       [L('Epic bonuses','史诗经济加成'), fmtNum(r.epic), L('total items','总数量')],
+      [L('Legendary bonuses','传奇经济加成'), fmtNum(r.legendary), L('total items','总数量')],
       [L('Signal flags','信号旗'), fmtNum(r.signals), L('total flags','总数量')]
     ];
     rp.innerHTML=tiles.map(function(t){ return '<div class="reward-tile"><small>'+t[0]+'</small><strong>'+t[1]+'</strong>'+(t[2]?'<span>'+t[2]+'</span>':'')+'</div>'; }).join('');
@@ -782,7 +831,8 @@ function renderSession(pop){
   var mc=session.acquired.filter(function(s){return s.group==='mid'}).length;
   var cc=session.acquired.filter(function(s){return s.group==='common'}).length;
   var gc2=session.acquired.filter(function(s){return s.group==='golden'||s.group==='legacy'}).length;
-  document.getElementById('acqTitle').textContent=L('Your ships — ','你的舰船 — ')+session.acquired.length+(session.acquired.length?'  ·  '+rc+' '+grpLabel('rare')+' · '+mc+' '+grpLabel('mid')+' · '+cc+' '+grpLabel('common')+(gc2?' · '+gc2+' '+L('Golden','金色'):''):'');
+  var bfc=session.acquired.filter(function(s){return s.group==='bf'}).length;
+  document.getElementById('acqTitle').textContent=L('Your ships — ','你的舰船 — ')+session.acquired.length+(session.acquired.length?'  ·  '+rc+' '+grpLabel('rare')+' · '+mc+' '+grpLabel('mid')+' · '+cc+' '+grpLabel('common')+(gc2?' · '+gc2+' '+L('Golden','金色'):'')+(bfc?' · '+bfc+' '+grpLabel('bf'):''):'');
   var last=session.log[0];
   var lr=document.getElementById('lastRoll');
   if(!last) lr.textContent=L('No rolls yet.','暂无记录。');
@@ -795,7 +845,7 @@ function renderSession(pop){
     logEl.innerHTML=session.log.slice(0,200).map(function(e){
       if(e.ship) return '<li><span class="num">'+e.n+'</span><span class="tag">'+typeShort(e.type)+'</span><span class="ship-win" style="flex:1">'+shipDisplayHtml(e.ship)+(e.ship.tier?' <small style="color:var(--muted)">'+roman(e.ship.tier)+'</small>':'')+'</span><span class="grp '+e.ship.group+'">'+grpLabel(e.ship.group)+'</span>'+(e.forced?'<span class="tag">'+L('PITY','保底')+'</span>':'')+'</li>';
       var extra=(e.extras&&e.extras.length)? '<span class="log-extra">'+e.extras.map(function(x){return txt(x)}).join('<br>')+'</span>' : '';
-      return '<li><span class="num">'+e.n+'</span><span class="tag">'+typeShort(e.type)+'</span><span style="flex:1"><span class="'+(e.goldenWin?'golden-win':'reward-txt')+'">'+txt(e.headline)+'</span>'+extra+'</span></li>';
+      return '<li><span class="num">'+e.n+'</span><span class="tag">'+typeShort(e.type)+'</span><span style="flex:1"><span class="'+((e.goldenWin||e.bfWin)?'golden-win':'reward-txt')+'">'+txt(e.headline)+'</span>'+extra+'</span></li>';
     }).join('')+(session.log.length>200?'<li><span class="noship">…</span></li>':'');
   }
   // acquired panel grouped
@@ -850,15 +900,18 @@ function applyLang(){
   setT('goldenTitle', L('✦ Golden Gift','✦ 金色礼物补给箱'));
   setT('btnGolden', L('Open','打开'));
   setT('btnGoldenAll', L('Open All','全部打开'));
+  setT('bfTitle', L('🔥 Battle Forged Premium','🔥 战火锻造高级补给箱'));
+  setT('btnBF', L('Open','打开'));
+  setT('btnBFAll', L('Open All','全部打开'));
   setT('remLblRare', L('Rare left','稀有剩余'));
   setT('remLblMid', L('Mid left','中级剩余'));
   setT('remLblCommon', L('Common left','普通剩余'));
   setT('rewardsTitle', L('Rewards','奖励'));
   setT('rollsTitle', L('Rolls','开箱记录'));
   setT('howSummary', L('How it works','玩法说明'));
-  var howEn=['Won ships leave the pool — no duplicates.','If a group runs out, its chance moves to the other groups; the total ship % never changes.','Pity is assumed from last year: Gift 100 · Mega 15 · Ultra 7 · Golden 10 ship-less in a row.','Golden Gifts drop from Santa containers and open separately.','Prices are last year\'s — 15.11 prices aren\'t published yet.','Login fetches your port via Wargaming and matches ships by exact ID; variants count separately. Golden ships aren\'t filtered by login.','Rates from the Closed Test 15.11 blog — may change before live.'];
-  var howZh=['已获得的舰船会离开船池 — 不会重复掉落。','某组舰船抽完后，其概率会转移到其他组；总出船概率不变。','保底按去年规则假设：礼物 100 · 超级 15 · 特级 7 · 金色 10 次无船触发。','金色礼物补给箱从圣诞补给箱中掉落，单独开启。','价格为去年价格 — 15.11 价格尚未公布。','登录后通过 Wargaming 获取你的港口，按确切 ID 匹配舰船；不同版本分别计算。金色舰船不按登录过滤。','概率来自封闭测试 15.11 博客 — 正式上线前可能调整。'];
-  for(var i=0;i<7;i++) setT('how'+(i+1), LANG==='zh'? howZh[i] : howEn[i]);
+  var howEn=['Won ships leave the pool — no duplicates.','If a group runs out, its chance moves to the other groups; the total ship % never changes.','Pity is assumed from last year: Gift 100 · Mega 15 · Ultra 7 · Golden 10 ship-less in a row.','Golden Gifts drop from Santa containers and open separately.','Prices are last year\'s — 15.11 prices aren\'t published yet.','Login fetches your port via Wargaming and matches ships by exact ID; variants count separately. Golden ships aren\'t filtered by login.','Rates from the Closed Test 15.11 blog — may change before live.','Own all 7 Golden ships and Golden ship drops become Battle Forged Premium containers instead: 50% New Jersey BF, guaranteed on the 3rd; if you already own her, 2,500 Steel instead.'];
+  var howZh=['已获得的舰船会离开船池 — 不会重复掉落。','某组舰船抽完后，其概率会转移到其他组；总出船概率不变。','保底按去年规则假设：礼物 100 · 超级 15 · 特级 7 · 金色 10 次无船触发。','金色礼物补给箱从圣诞补给箱中掉落，单独开启。','价格为去年价格 — 15.11 价格尚未公布。','登录后通过 Wargaming 获取你的港口，按确切 ID 匹配舰船；不同版本分别计算。金色舰船不按登录过滤。','概率来自封闭测试 15.11 博客 — 正式上线前可能调整。','集齐金色礼物全部 7 艘船后，金色箱的出船奖励改为战火锻造高级补给箱；锻造箱 50% 出新泽西 BF，第 3 个保底必出，已有时改为 2,500 钢铁。'];
+  for(var i=0;i<8;i++) setT('how'+(i+1), LANG==='zh'? howZh[i] : howEn[i]);
   var ix=document.getElementById('inOpenX'); if(ix) ix.setAttribute('aria-label', L('Batch size','数量'));
 }
 function setLang(l){
@@ -882,6 +935,8 @@ document.getElementById('btnRollX').addEventListener('click',function(){
 document.getElementById('btnReset').addEventListener('click',function(){ resetSession(); });
 document.getElementById('btnGolden').addEventListener('click',function(){ rollGoldenOne(); renderSession(true); });
 document.getElementById('btnGoldenAll').addEventListener('click',function(){ rollGoldenBatch(); });
+document.getElementById('btnBF').addEventListener('click',function(){ rollBFOne(); renderSession(true); });
+document.getElementById('btnBFAll').addEventListener('click',function(){ rollBFBatch(); });
 document.getElementById('inOpenX').addEventListener('input',function(){ updateBatchCost(); });
 document.getElementById('inOpenX').addEventListener('change',function(){ updateBatchCost(); });
 document.getElementById('inPity').addEventListener('change',function(){ renderSession(); });
