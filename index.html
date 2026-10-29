@@ -1,0 +1,900 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+<meta name="color-scheme" content="dark"/>
+<link rel="icon" href="data:,"/>
+<title>圣诞补给箱模拟器</title>
+<style>
+:root{
+  --bg:#0c1218; --panel:#131c26; --panel2:#0f1720; --line:#233243; --line2:#2c3e52;
+  --text:#e8eef3; --muted:#9db0c2; --muted2:#c7d3de;
+  --gold:#e8b34d; --red:#d9534a; --ice:#6fc3df; --green:#3fb27f;
+  --rare:#e8b34d; --mid:#6fc3df; --common:#a8b6c2;
+  --radius:14px;
+}
+*{box-sizing:border-box}
+[hidden]{display:none !important}
+html,body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+a{color:var(--ice)}
+.wrap{max-width:1180px;margin:0 auto;padding:20px 16px 40px}
+.top{padding:6px 0 18px;border-bottom:1px solid var(--line)}
+.top h1{font-size:28px;line-height:1.05;letter-spacing:-.02em;margin:0;font-weight:800}
+.top h1 span{color:var(--gold)}
+.sub{color:var(--muted);font-size:14px;line-height:1.55;margin:8px 0 0;max-width:720px}
+.player{margin-top:14px;display:flex;flex-wrap:wrap;gap:8px}
+.chip{border:1px solid var(--line);background:var(--panel);border-radius:999px;padding:7px 11px;font-size:12.5px;color:var(--muted2)}
+.chip b{color:#fff;font-size:13px}
+.chip.gold{border-color:#5a451d;background:#1e1a0f;color:#f3d48a}
+.layout{display:grid;grid-template-columns:340px 1fr;gap:16px;margin-top:16px}
+@media(max-width:860px){.layout{grid-template-columns:1fr}}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:16px}
+.card h2{margin:0 0 4px;font-size:15px;letter-spacing:.01em}
+.card h3{margin:0 0 8px;font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.hint{font-size:12.5px;color:var(--muted);line-height:1.5}
+label{font-size:13px;color:var(--muted2);font-weight:600}
+.cont-row{display:grid;grid-template-columns:1fr 86px;gap:10px;align-items:center;padding:12px 0;border-bottom:1px solid var(--line)}
+.cont-row:last-of-type{border-bottom:0}
+.cont-name{font-weight:700;font-size:14px}
+.cont-rate{font-size:12px;color:var(--muted);margin-top:2px;line-height:1.4}
+input[type=number],select{width:100%;background:#0a0f14;border:1px solid var(--line2);color:#fff;border-radius:9px;padding:10px 10px;font-size:15px;font-weight:700;text-align:center}
+select{text-align:left;font-weight:600;font-size:14px}
+.field{margin-top:14px}
+.field label{display:block;margin-bottom:6px}
+.switch-row{display:flex;gap:12px;align-items:flex-start;padding:13px 0;border-top:1px solid var(--line)}
+.switch-row input{width:20px;height:20px;accent-color:var(--gold);margin-top:2px;flex-shrink:0}
+.switch-row strong{font-size:13.5px;display:block;line-height:1.3}
+.switch-row p{margin:3px 0 0;font-size:12.5px;color:var(--muted);line-height:1.5}
+.btn{width:100%;background:var(--gold);color:#111;border:0;border-radius:11px;padding:14px;font-size:15px;font-weight:800;cursor:pointer;margin-top:14px}
+.btn:active{transform:scale(.99)}
+.total-line{display:flex;justify-content:space-between;margin-top:12px;font-size:13px;color:var(--muted)}
+.total-line b{color:#fff}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+@media(max-width:640px){.stats{grid-template-columns:repeat(2,1fr)}}
+.stat{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:13px}
+.stat small{display:block;color:var(--muted);font-size:11.5px;letter-spacing:.05em;text-transform:uppercase;font-weight:700}
+.stat strong{display:block;font-size:26px;line-height:1;margin-top:7px;letter-spacing:-.02em}
+.stat span{font-size:12px;color:var(--muted)}
+.hist{margin-top:16px}
+.hrow{display:grid;grid-template-columns:28px 1fr 86px;gap:10px;align-items:center;margin:6px 0;font-size:12.5px}
+.hbar{height:18px;background:#0a0f14;border:1px solid var(--line);border-radius:6px;overflow:hidden}
+.hfill{height:100%;background:linear-gradient(90deg,#2a7ea6,var(--ice));min-width:2px}
+.hfill.zero{background:#2b3a4a}
+.group-head{display:flex;justify-content:space-between;align-items:center;margin:18px 0 8px}
+.group-head h3{margin:0}
+.badge{font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;padding:4px 7px;border-radius:999px;border:1px solid var(--line2)}
+.badge.rare{color:#1a1400;background:var(--rare);border-color:var(--rare)}
+.badge.mid{color:#06181f;background:var(--mid);border-color:var(--mid)}
+.badge.common{color:#111;background:#d6dde3;border-color:#d6dde3}
+.ship-row{display:grid;grid-template-columns:1fr 120px 52px;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid #1d2a38}
+@media(max-width:560px){.ship-row{grid-template-columns:1fr 70px 44px}}
+.ship-name{font-size:13.5px;font-weight:600;line-height:1.3}
+.ship-name small{color:var(--muted);font-weight:600}
+.coal{font-size:10.5px;background:#223018;color:#a7d68a;border:1px solid #3a5a28;padding:2px 5px;border-radius:999px;margin-left:6px;white-space:nowrap;font-weight:700}
+.pbar{height:8px;background:#0a0f14;border-radius:999px;overflow:hidden;border:1px solid var(--line)}
+.pfill{height:100%}
+.pfill.rare{background:var(--rare)} .pfill.mid{background:var(--ice)} .pfill.common{background:#d6dde3}
+.pct{font-variant-numeric:tabular-nums;font-weight:800;font-size:13px;text-align:right}
+.sample{list-style:none;margin:0;padding:0}
+.sample li{display:flex;gap:10px;padding:9px 0;border-bottom:1px solid #1d2a38;font-size:13.5px;align-items:center}
+.sample li:last-child{border:0}
+.num{width:26px;height:26px;border-radius:50%;background:#222f3f;border:1px solid var(--line2);display:grid;place-items:center;font-size:12px;font-weight:800;flex-shrink:0}
+.tag{font-size:11px;padding:3px 6px;border-radius:999px;background:#1e2c3c;color:var(--muted2);border:1px solid var(--line);white-space:nowrap}
+.notes{font-size:12.5px;color:var(--muted);line-height:1.65}
+.notes li{margin:5px 0}
+.empty{color:var(--muted);font-size:13.5px;padding:10px 0}
+details{margin-top:6px}
+summary{cursor:pointer;color:var(--muted2);font-size:13px;font-weight:700}
+.roll-hero{border-color:#5a451d;background:linear-gradient(180deg,#171a12,#131c26)}
+.type-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:12px 0}
+@media(max-width:640px){.type-grid{grid-template-columns:1fr}}
+.type-btn{background:#0a0f14;border:1.5px solid var(--line2);color:var(--text);border-radius:12px;padding:12px;text-align:left;cursor:pointer}
+.type-btn.active{border-color:var(--gold);background:#1e1a0f}
+.type-btn strong{display:block;font-size:14px}
+.type-btn span{display:block;font-size:12px;color:var(--muted);margin-top:4px;line-height:1.45}
+.roll-actions{display:flex;flex-wrap:wrap;gap:9px;align-items:center;margin-top:12px}
+.btn-dice{background:var(--gold);color:#111;border:0;border-radius:11px;padding:13px 18px;font-size:15px;font-weight:900;cursor:pointer}
+.btn-sec{background:#222f3f;color:#fff;border:1px solid var(--line2);border-radius:11px;padding:12px 14px;font-size:13.5px;font-weight:800;cursor:pointer}
+.btn-reset{background:transparent;color:#f0a49e;border:1px solid #6b2f2a;border-radius:11px;padding:12px 14px;font-size:13.5px;font-weight:800;cursor:pointer}
+.openx{display:flex;gap:6px;align-items:center}
+.openx input{width:70px}
+.pitybar{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.pity-pill{font-size:12px;color:var(--muted2);background:#0a0f14;border:1px solid var(--line);border-radius:999px;padding:6px 10px}
+.pity-pill b{color:#fff}
+.session-grid{display:grid;grid-template-columns:1.1fr .9fr;gap:16px;margin-top:16px}
+@media(max-width:860px){.session-grid{grid-template-columns:1fr}}
+.log{list-style:none;margin:0;padding:0;max-height:520px;overflow:auto}
+.log li{display:flex;gap:10px;align-items:center;padding:9px 0;border-bottom:1px solid #1d2a38;font-size:13.5px}
+.log li:last-child{border:0}
+.ship-win{font-weight:800;color:#fff}
+.grp{font-size:10.5px;font-weight:900;letter-spacing:.05em;padding:3px 6px;border-radius:999px;text-transform:uppercase;white-space:nowrap}
+.grp.rare{background:var(--rare);color:#1a1400}.grp.mid{background:var(--ice);color:#06181f}.grp.common{background:#d6dde3;color:#111}
+.noship{color:var(--muted)}
+.acq-group{margin-top:12px}
+.acq-group h4{margin:0 0 6px;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.acq-chips{display:flex;flex-wrap:wrap;gap:6px}
+.acq-chip{background:#0a0f14;border:1px solid var(--line2);border-radius:999px;padding:6px 9px;font-size:12.5px;font-weight:700}
+.remaining{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+@keyframes pop{0%{transform:scale(.97)}100%{transform:scale(1)}}
+.pop{animation:pop .18s ease}
+.type-btn .price-line{display:block;color:var(--gold);font-weight:800;font-size:12.5px;margin-top:5px}
+.costbar{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.cost-pill{font-size:12.5px;color:var(--muted2);background:#1e1a0f;border:1px solid #5a451d;border-radius:999px;padding:7px 11px}
+.cost-pill b{color:#fff}
+.cost-pill.gold b{color:#f3d48a}
+.cost-pill.win{border-color:#3a5a28;background:#16200f;color:#c4e3ae}
+.cost-pill.win b{color:#a7d68a}
+.reward-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:4px}
+@media(max-width:860px){.reward-grid{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:560px){.reward-grid{grid-template-columns:repeat(2,1fr)}}
+.reward-tile{background:#0a0f14;border:1px solid var(--line);border-radius:10px;padding:10px 11px}
+.reward-tile small{display:block;color:var(--muted);font-size:11px;letter-spacing:.04em;text-transform:uppercase;font-weight:700;line-height:1.35}
+.reward-tile strong{display:block;font-size:17px;margin-top:4px;letter-spacing:-.01em}
+.reward-tile span{font-size:11.5px;color:var(--muted)}
+.golden-bar{display:flex;flex-wrap:wrap;gap:9px;align-items:center;margin-top:14px;background:#1e1a0f;border:1px solid #5a451d;border-radius:12px;padding:12px 14px}
+.golden-bar .g-title{font-weight:800;font-size:14px;color:#f3d48a}
+.golden-bar .g-count{font-size:13px;color:var(--muted2)}
+.btn-gold{background:var(--gold);color:#111;border:0;border-radius:10px;padding:11px 15px;font-size:13.5px;font-weight:900;cursor:pointer}
+.btn-gold-sec{background:transparent;color:#f3d48a;border:1px solid #5a451d;border-radius:10px;padding:10px 13px;font-size:13px;font-weight:800;cursor:pointer}
+.btn-gold[disabled],.btn-gold-sec[disabled]{opacity:.4;cursor:not-allowed}
+.log-extra{display:block;font-size:12px;color:var(--muted);margin-top:2px;line-height:1.45}
+.reward-txt{font-weight:600;color:var(--muted2)}
+.golden-win{color:var(--gold);font-weight:800}
+.grp.golden,.grp.legacy{background:var(--gold);color:#1a1400}
+.type-btn .drops-line{display:block;font-size:11.5px;color:var(--muted);margin-top:4px;line-height:1.45}
+.login-panel{margin-top:14px;background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:16px}
+.login-panel h2{margin:0 0 6px;font-size:16px}
+.login-btns{display:flex;flex-wrap:wrap;gap:9px;margin-top:12px}
+.btn-login{background:var(--gold);color:#111;border:0;border-radius:10px;padding:11px 16px;font-size:14px;font-weight:900;cursor:pointer}
+.btn-login-sec{background:#222f3f;color:#fff;border:1px solid var(--line2);border-radius:10px;padding:11px 16px;font-size:14px;font-weight:800;cursor:pointer}
+.btn-logout{background:transparent;color:#f0a49e;border:1px solid #6b2f2a;border-radius:10px;padding:10px 14px;font-size:13.5px;font-weight:800;cursor:pointer}
+.login-error{margin-top:10px;background:#2a1512;border:1px solid #6b2f2a;color:#f3c1bc;border-radius:10px;padding:11px 13px;font-size:13.5px;line-height:1.5}
+.login-status{margin-top:8px;font-size:13px;color:var(--muted)}
+.login-user{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between}
+/* --- UI overhaul: compact, action-first --- */
+.wrap{max-width:980px;padding:18px 16px 36px}
+.top{border:0;padding-bottom:4px}
+.top h1{font-size:30px}
+.sub{font-size:15px;margin-top:6px}
+.login-row{display:flex;flex-wrap:wrap;gap:7px;align-items:center;margin-top:12px}
+.login-row .lbl{font-size:13px;color:var(--muted);font-weight:700;margin-right:2px}
+.btn-login{background:#222f3f;color:#fff;border:1px solid var(--line2);border-radius:999px;padding:8px 14px;font-size:13px;font-weight:800;cursor:pointer}
+.btn-logout{padding:7px 12px;font-size:12.5px;border-radius:999px}
+.login-error{font-size:13px;padding:9px 11px}
+.hero{margin-top:16px;background:var(--panel);border:1px solid #5a451d;border-radius:16px;padding:18px}
+.type-grid{margin:0 0 6px}
+.type-btn{padding:14px}
+.type-btn strong{font-size:15px}
+.type-btn .price-line{font-size:13px}
+.btn-dice{width:100%;padding:16px;font-size:17px;border-radius:12px;margin-top:10px}
+.roll-actions{margin-top:10px}
+.roll-actions .btn-sec{flex:1}
+.tinyline{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center;margin-top:12px;font-size:12px;color:var(--muted)}
+.tinyline b{color:#fff}
+.tinyline label{display:inline-flex;gap:6px;align-items:center;cursor:pointer;color:var(--muted2);font-size:12px}
+.tinyline input{width:16px;height:16px;accent-color:var(--gold)}
+.costline{margin-top:10px;font-size:13.5px;color:var(--muted2);background:#0a0f14;border:1px solid var(--line);border-radius:10px;padding:10px 12px;line-height:1.5}
+.costline b{color:#fff}
+.golden-bar{margin-top:10px;padding:9px 12px;opacity:.55}
+.golden-bar.has{opacity:1;background:#241d0d}
+.golden-bar .g-count{font-size:12.5px}
+.panel{margin-top:16px;background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:18px}
+.panel h2{margin:0;font-size:19px}
+.reward-grid{grid-template-columns:repeat(4,1fr);gap:7px;margin-top:10px}
+@media(max-width:560px){.reward-grid{grid-template-columns:repeat(3,1fr)}}
+.reward-tile{padding:8px 10px}
+.reward-tile small{font-size:10px}
+.reward-tile strong{font-size:15px;margin-top:2px}
+.reward-tile span{display:none}
+.log{max-height:360px}
+.log li{padding:6px 0;font-size:13px}
+.num{width:22px;height:22px;font-size:11px}
+details.how{margin-top:16px;background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:12px 16px}
+details.how summary{font-size:14px}
+details.how ul{margin:10px 0 4px;padding-left:18px;color:var(--muted);font-size:13px;line-height:1.6}
+.acq-chip{padding:7px 11px;font-size:13px}
+.empty{font-size:14px;color:var(--muted)}
+.lang-toggle{display:flex;gap:6px;justify-content:flex-end;margin-bottom:10px}
+.lang-btn{background:#222f3f;color:var(--muted2);border:1px solid var(--line2);border-radius:999px;padding:7px 13px;font-size:13px;font-weight:800;cursor:pointer}
+.lang-btn.active{background:var(--gold);color:#111;border-color:var(--gold)}
+.paste-row{display:flex;gap:7px;margin-top:10px;align-items:center}
+.paste-row input{flex:1;min-width:0;background:#0a0f14;border:1px solid var(--line2);color:var(--text);border-radius:999px;padding:9px 13px;font-size:13px}
+.paste-row input::placeholder{color:var(--muted)}
+.btn-paste{background:var(--gold);color:#111;border:0;border-radius:999px;padding:9px 15px;font-size:13px;font-weight:900;cursor:pointer;white-space:nowrap}
+.ship-en-sub{color:var(--muted);font-weight:500;font-size:11.5px;letter-spacing:0}
+.ship-win .ship-en-sub{font-weight:600}
+.acq-chip .ship-en-sub{font-size:11px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="lang-toggle" role="group" aria-label="Language / 语言">
+      <button type="button" id="langZh" class="lang-btn active">简体中文</button>
+      <button type="button" id="langEn" class="lang-btn">English</button>
+    </div>
+    <h1 id="pageTitle">圣诞补给箱 <span>🎄</span></h1>
+    <p class="sub" id="subTitle">打开圣诞补给箱，看看你能开出哪些舰船。</p>
+    <div class="player" id="stateChips">
+      <span class="chip gold"><b>143 艘船可掉落</b></span><span class="chip">稀有 <b>42</b></span><span class="chip">中级 <b>53</b></span><span class="chip">普通 <b>48</b></span>
+    </div>
+    <div id="loginPanel">
+      <div class="login-row" id="loginLoggedOut">
+        <span class="lbl" id="loginLbl">你的港口：</span>
+        <button class="btn-login" data-login-realm="eu" type="button">登录 · 欧洲</button>
+        <button class="btn-login" data-login-realm="com" type="button">登录 · 北美</button>
+        <button class="btn-login" data-login-realm="asia" type="button">登录 · 亚洲</button>
+        <span class="login-status" id="loginStatus"></span>
+      </div>
+      <div class="login-status" id="loginHint" style="margin-top:6px">登录后自动同步你的港口</div>
+      <div class="login-row" id="loginLoggedIn" hidden>
+        <span class="chip gold"><b id="loginUserTitle">已登录</b>&nbsp;<span id="loginUserDetail"></span></span>
+        <button class="btn-logout" id="btnLogout" type="button">退出登录</button>
+        <span class="login-status" id="loginStatusIn"></span>
+      </div>
+      <div class="login-error" id="loginError" hidden></div>
+    </div>
+  </header>
+
+  <section class="hero" id="rollHero">
+    <div class="type-grid" role="group" aria-label="Container type">
+      <button class="type-btn" data-type="gift"><strong id="tn-gift">圣诞礼物补给箱</strong><span id="effDesc-gift">2.5% 出船</span><span class="price-line" id="price-gift">250 达布隆 · ≈ $1</span></button>
+      <button class="type-btn active" data-type="mega"><strong id="tn-mega">圣诞超级礼物补给箱</strong><span id="effDesc-mega">16% 出船</span><span class="price-line" id="price-mega">1,250 达布隆 · ≈ $5</span></button>
+      <button class="type-btn" data-type="ultra"><strong id="tn-ultra">圣诞特级礼物补给箱</strong><span id="effDesc-ultra">32% 出船</span><span class="price-line" id="price-ultra">每个 $10</span></button>
+    </div>
+    <button class="btn-dice" id="btnRoll">🎲 打开补给箱</button>
+    <div class="roll-actions">
+      <button class="btn-sec" id="btnRoll10">打开 10 个</button>
+      <span class="openx"><input type="number" id="inOpenX" aria-label="数量" value="50" min="1" max="500"><button class="btn-sec" id="btnRollX">打开 X 个</button></span>
+      <button class="btn-reset" id="btnReset">↺ 重置</button>
+    </div>
+    <p class="hint" id="batchCost" style="margin:8px 0 0">打开 50 × 超级 = 62,500 达布隆 ≈ $250</p>
+    <div class="tinyline">
+      <label><input type="checkbox" id="inPity" checked> <span id="pityLbl">保底</span></label>
+      <span><span id="pl-gift">礼物</span> <b id="pityGift">0 / 100</b></span>
+      <span><span id="pl-mega">超级</span> <b id="pityMega">0 / 15</b></span>
+      <span><span id="pl-ultra">特级</span> <b id="pityUltra">0 / 7</b></span>
+      <span><span id="pl-golden">金色</span> <b id="pityGolden">0 / 10</b></span>
+      <span id="liveOdds"></span>
+    </div>
+    <div class="costline" id="costBar"><span id="costOpenedLbl">已打开</span> <b id="sessOpened">0</b> · <b id="costDoubloons">0 达布隆</b> <span id="costDoubloonDollars"></span> · <span id="costWonLbl">赢回</span> <b id="costWonBack">0 达布隆</b> · <span id="costNetLbl">净花费</span> <b id="costNet">0</b> <span id="costNetDollars"></span> · <span id="costUltraLbl">特级</span> <b id="costUltraDollars">$0</b> · <b id="costCombined">≈ $0</b> &nbsp;<span id="costBreakdown"></span></div>
+    <div class="golden-bar" id="goldenBar">
+      <span class="g-title" id="goldenTitle">✦ 金色礼物补给箱</span>
+      <span class="g-count" id="goldenCount">×0</span>
+      <button class="btn-gold" id="btnGolden" disabled>打开</button>
+      <button class="btn-gold-sec" id="btnGoldenAll" disabled>全部打开</button>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2 id="acqTitle">你的舰船 — 0</h2>
+    <div class="remaining">
+      <span class="chip"><span id="remLblRare">稀有剩余</span> <b id="remRare">42 / 42</b></span>
+      <span class="chip"><span id="remLblMid">中级剩余</span> <b id="remMid">53 / 53</b></span>
+      <span class="chip"><span id="remLblCommon">普通剩余</span> <b id="remCommon">48 / 48</b></span>
+    </div>
+    <div id="acquiredPanel"><p class="empty">还没有舰船 — 打开一个补给箱吧。</p></div>
+    <h3 style="margin-top:20px" id="rewardsTitle">奖励</h3>
+    <div class="reward-grid" id="rewardsPanel"></div>
+  </section>
+
+  <section class="panel">
+    <h2 style="font-size:16px" id="rollsTitle">开箱记录</h2>
+    <p class="hint" id="lastRoll" style="margin:4px 0 6px">暂无记录。</p>
+    <ul class="log" id="rollLog"></ul>
+  </section>
+
+  <details class="how">
+    <summary id="howSummary">玩法说明</summary>
+    <ul>
+      <li id="how1">已获得的舰船会离开船池 — 不会重复掉落。</li>
+      <li id="how2">某组舰船抽完后，其概率会转移到其他组；总出船概率不变。</li>
+      <li id="how3">保底按去年规则假设：礼物 100 · 超级 15 · 特级 7 · 金色 10 次无船触发。</li>
+      <li id="how4">金色礼物补给箱从圣诞补给箱中掉落，单独开启。</li>
+      <li id="how5">价格为去年价格 — 15.11 价格尚未公布。</li>
+      <li id="how6">登录后通过 Wargaming 获取你的港口，按确切 ID 匹配舰船；不同版本分别计算。金色舰船不按登录过滤。</li>
+      <li id="how7">概率来自封闭测试 15.11 博客 — 正式上线前可能调整。</li>
+    </ul>
+  </details>
+</div>
+
+<script>
+var APP_ID='9b7a0d1a35b96b31652ee253b3d7b062';
+var LS_KEY='wowsSantaSim:user';
+/* ---------- i18n: default zh, persisted, pure text layer ---------- */
+var LANG_KEY='wowsSantaSim:lang';
+var LANG='zh';
+try{ var _sl=localStorage.getItem(LANG_KEY); if(_sl==='en'||_sl==='zh') LANG=_sl; }catch(e){}
+function L(en,zh){ return LANG==='zh'? zh : en; }
+function TX(en,zh){ return {en:en, zh:zh}; }
+function txt(o){ if(o==null) return ''; if(typeof o==='string') return o; return o[LANG]||o.en||''; }
+function grpLabel(g){ var m={rare:['Rare','稀有'],mid:['Mid','中级'],common:['Common','普通'],golden:['Golden Gift','金色礼物补给箱'],legacy:['Golden / Legacy','金色 / 经典']}; var p=m[g]; return p? L(p[0],p[1]) : g; }
+function typeLabel(t){ return LANG==='zh'? (t.labelZh||t.label) : t.label; }
+function typeShort(t){ return LANG==='zh'? (t.shortZh||t.short) : t.short; }
+var COAL_NAMES={'Marco Polo':1,'Z-44':1,'Tulsa':1};
+/* Chinese community-standard ship names (社区通用译名), keyed by ship_id */
+var SHIP_ZH={
+3760076208:'阿尔瓦罗·德·巴赞',3550394160:'希尔德布兰德',3760142288:'雷霆者',3655251952:'波多黎各',3761190896:'密苏里',3751753168:'列宁',3751687888:'朝潮',3762206160:'米哈伊尔·库图佐夫',4293801424:'轰鸣',4268635856:'神风',3765384944:'尤利乌斯·凯撒',3760075984:'吕顺',3655218480:'斯莫兰',3550360912:'拉潘帕',3655251408:'斯摩棱斯克',3549869840:'托宁',4273911760:'蒙茅斯',3539941360:'罗德岛',3539941104:'孔特·维尔德',3550361296:'冬月',3550393680:'伊里萨尔上将',3761157584:'喀琅施塔得',3750704848:'肥前',3761190608:'武藏',3751753552:'让·巴尔',3761125360:'贝纳姆',3540923696:"闪电'52",3530504176:'佐治亚',3540989936:'印第安纳',3762239280:'奥丁',3741300688:'巨像',3751720944:'安克雷奇',3751753712:'马萨诸塞',3751786480:'企业',3762173744:'Z-39',3763255248:'贝尔法斯特',3752802256:'纳尔逊',3764270896:'T-61',3764303664:'施佩伯爵',3764369200:'埃里希·洛温哈特',4267587280:'神风R',4277024464:'风神',
+3740218576:'孙逸仙',3540956624:'库兹马·米宁',3540956912:'费兰特·贡扎加',3761125136:'格罗宁根',3656333264:'猩红雷霆',3750639600:'哈尔福德',3762206032:'格劳上将',3541972432:'敏捷',3741267408:'博罗季诺',3762271984:'阿奎拉',3531519792:'威斯巴登',3741234992:'席尔',3541972944:'爱斯基摩',3730749392:'汉普郡',3762206672:'柴郡',3762272208:'不挠',3730782192:'星座',3761157328:'大连',3761124656:'维洛斯',3540989360:'维多利亚',3761190352:'纳瓦林',3540924112:'峰云',3519985360:'铃谷',3719247568:'剑',3750704880:'朱塞佩·威尔第',3761190640:'马可·波罗',3750639408:'Z-44',3540957136:'阿伯丁',3540957168:'剑桥',3750672368:'塔尔萨',3530470608:'包头',3530471408:'沃思堡',3551409520:'卡尤加',3551475120:'凯旋',3540989744:'弗里德里希·卡尔',3542004944:'纳莱',3762173232:'飓风',3542037808:'图尔古特·雷伊斯',3542005040:'卡罗尔一世',3552490832:'阿吉雷',3762206128:'努曼西亚',3761681872:'S-189',3730748880:'彼得·巴格拉季翁',3741234640:'奥恰科夫',3531486928:'时雨',4276008656:'利根',3542038256:'马尔坎托尼奥·科隆纳',3751687984:'Z-35',3541972816:'奥什',3730782032:'佛兰德',3761682384:'联盟',3751720912:"虎'59",3552524240:'威尔士亲王',
+3720296272:'皮卡第',3542071248:'忒修斯',3763254608:'七月九日',3763287408:'育空',3752736208:"塔什干'39",3763221968:'列宁格勒',3543086544:'阿尔汉格尔斯克',3762238928:'波尔塔瓦',3763222224:'夕立',3752769232:'摩耶',3763254992:'十胜',3752802000:'日向',3763287760:'爱鹰',3763222256:'FR25',3658397424:'戈里齐亚',3752769264:'弗朗切斯科·费鲁乔',3763255024:'阿布鲁齐公爵',3752769328:'魏玛',3763255088:'慕尼黑',3763287856:'沙恩霍斯特',3763255120:'土伦',3763287888:'斯特拉斯堡',3543021520:"朱庇特'42",3522115536:'皇家君主',3543087056:'罗德尼',3731830736:'科林伍德',3763288016:'胡德',3668883440:'博伊西',3763255280:'印第安纳波利斯',4288591856:'亚特兰大',3553572848:'加利福尼亚',3752802288:'佛罗里达',3543577808:"新中国'14",3764303152:'埃利',3764270416:'茹鲁阿',3753817456:'迈索尔',3659445712:'马卡罗夫上将',3743364816:'伊势',3764336336:'陆奥',3764369232:'贝亚恩',3544102864:"猎户座'44",3764271088:'莫纳汉',3765384528:'里约热内卢',3765319120:'猎人',3765351888:'红色克里米亚',3765352400:'埃克塞特',3765319664:'希尔',4264441840:'西姆斯'
+};
+var GOLDEN_ZH={'Latouche-Tréville':'拉图什·特雷维尔','Rodina':'祖国','Tōgasa':'托加萨','Rodina G':'祖国 G','Tōgasa G':'托加萨 G','Somers G':'索默斯 G','Tywysog Cymru':'威尔士亲王（威尔士语）'};
+function shipZhName(s){ if(!s) return ''; if(s.zh) return s.zh; if(s.ship_id && SHIP_ZH[s.ship_id]) return SHIP_ZH[s.ship_id]; if(s.name && GOLDEN_ZH[s.name]) return GOLDEN_ZH[s.name]; return s.name||''; }
+function shipDisplayHtml(s){ if(!s) return ''; var en=s.name||''; if(LANG!=='zh') return escapeHtml(en); var zh=shipZhName(s); if(!zh||zh===en) return escapeHtml(en); return escapeHtml(zh)+' <small class="ship-en-sub">'+escapeHtml(en)+'</small>'; }
+/* Full 15.11 Santa pool — [name, tier, ship_id] */
+var FULL_RARE=[
+["Álvaro de Bazán",10,3760076208],["Hildebrand",10,3550394160],["Thunderer",10,3760142288],["Puerto Rico",10,3655251952],["Missouri",9,3761190896],["Lenin",8,3751753168],["Asashio",8,3751687888],["Mikhail Kutuzov",8,3762206160],["Gremyashchy",5,4293801424],["Kamikaze",5,4268635856],["Giulio Cesare",5,3765384944],["Lüshun",10,3760075984],["Småland",10,3655218480],["La Pampa",10,3550360912],["Smolensk",10,3655251408],["Tonijn",10,3549869840],["Monmouth",10,4273911760],["Rhode Island",10,3539941360],["Conte Verde",10,3539941104],["Fuyutsuki",10,3550361296],["Almirante Irízar",10,3550393680],["Kronshtadt",9,3761157584],["Hizen",9,3750704848],["Musashi",9,3761190608],["Jean Bart",9,3751753552],["Benham",9,3761125360],["Błyskawica '52",9,3540923696],["Georgia",9,3530504176],["Indiana",9,3540989936],["Odin",8,3762239280],["Colossus",8,3741300688],["Anchorage",8,3751720944],["Massachusetts",8,3751753712],["Enterprise",8,3751786480],["Z-39",7,3762173744],["Belfast",7,3763255248],["Nelson",7,3752802256],["T-61",6,3764270896],["Admiral Graf Spee",6,3764303664],["Erich Loewenhardt",6,3764369200],["Kamikaze R",5,4267587280],["Fūjin",5,4277024464]
+];
+var FULL_MID=[
+["Sun Yat-Sen",9,3740218576],["Kozma Minin",9,3540956624],["Ferrante Gonzaga",9,3540956912],["Groningen",9,3761125136],["Scarlet Thunder",9,3656333264],["Halford",9,3750639600],["Almirante Grau",8,3762206032],["Provorny",8,3541972432],["Borodino",8,3741267408],["Aquila",8,3762271984],["Wiesbaden",8,3531519792],["Schill",8,3741234992],["Eskimo",8,3541972944],["Hampshire",8,3730749392],["Cheshire",8,3762206672],["Indomitable",8,3762272208],["Constellation",8,3730782192],["Dalian",9,3761157328],["Velos",9,3761124656],["Victoria",9,3540989360],["Navarin",9,3761190352],["Minegumo",9,3540924112],["Suzuya",9,3519985360],["Tsurugi",9,3719247568],["Giuseppe Verdi",9,3750704880],["Marco Polo",9,3761190640],["Z-44",9,3750639408],["Aberdeen",9,3540957136],["Cambridge",9,3540957168],["Tulsa",9,3750672368],["Baotou",9,3530470608],["Fort Worth",9,3530471408],["Cayuga",9,3551409520],["Triunfante",9,3551475120],["Friedrich Carl",9,3540989744],["Narai",8,3542004944],["Orkan",8,3762173232],["Turgut Reis",8,3542037808],["Regele Carol I",8,3542005040],["Comandante Aguirre",8,3552490832],["Numancia",8,3762206128],["S-189",8,3761681872],["Pyotr Bagration",8,3730748880],["Ochakov",8,3741234640],["Shigure",8,3531486928],["Tone",8,4276008656],["Marcantonio Colonna",8,3542038256],["Z-35",8,3751687984],["Hoche",8,3541972816],["Flandre",8,3730782032],["Alliance",8,3761682384],["Tiger '59",8,3751720912],["Prince of Wales",8,3552524240]
+];
+var FULL_COMMON=[
+["Picardie",8,3720296272],["Theseus",8,3542071248],["Nueve de Julio",7,3763254608],["Yukon",7,3763287408],["Tashkent '39",7,3752736208],["Leningrad",7,3763221968],["Arkhangelsk",7,3543086544],["Poltava",7,3762238928],["Yūdachi",7,3763222224],["Maya",7,3752769232],["Tokachi",7,3763254992],["Hyūga",7,3752802000],["Ashitaka",7,3763287760],["FR25",7,3763222256],["Gorizia",7,3658397424],["Francesco Ferruccio",7,3752769264],["Duca degli Abruzzi",7,3763255024],["Weimar",7,3752769328],["München",7,3763255088],["Scharnhorst",7,3763287856],["Toulon",7,3763255120],["Strasbourg",7,3763287888],["Jupiter '42",7,3543021520],["Royal Sovereign",7,3522115536],["Rodney",7,3543087056],["Collingwood",7,3731830736],["Hood",7,3763288016],["Boise",7,3668883440],["Indianapolis",7,3763255280],["Atlanta",7,4288591856],["California",7,3553572848],["Florida",7,3752802288],["Xin Zhong Guo '14",6,3543577808],["Elli",6,3764303152],["Juruá",6,3764270416],["Mysore",6,3753817456],["Admiral Makarov",6,3659445712],["Ise",6,3743364816],["Mutsu",6,3764336336],["Béarn",6,3764369232],["Orion '44",6,3544102864],["Monaghan",6,3764271088],["Rio de Janeiro",5,3765384528],["Okhotnik",5,3765319120],["Krasny Krym",5,3765351888],["Exeter",5,3765352400],["Hill",5,3765319664],["Sims",7,4264441840]
+];
+var RARE=FULL_RARE, MID=FULL_MID, COMMON=FULL_COMMON;
+/* Login / port state */
+var currentUser=null;
+var portIdSet=null;
+var portTotalCount=0;
+var ownedInPoolCount=0;
+var loginLoading=false;
+function realmLabel(r){ return r==='eu'? L('EU','欧洲') : (r==='asia'? L('ASIA','亚洲') : L('NA','北美')); }
+function isOwned(shipId){ return !!(portIdSet && portIdSet[String(shipId)]); }
+function computePoolCounts(){
+  var r=FULL_RARE.filter(function(s){return !isOwned(s[2])}).length;
+  var m=FULL_MID.filter(function(s){return !isOwned(s[2])}).length;
+  var c=FULL_COMMON.filter(function(s){return !isOwned(s[2])}).length;
+  return {rare:r,mid:m,common:c,total:r+m+c};
+}
+function renderStateChips(){
+  var el=document.getElementById('stateChips'); if(!el) return;
+  var counts=computePoolCounts();
+  el.innerHTML='<span class="chip gold"><b>'+counts.total+L(' ships can drop',' 艘船可掉落')+'</b></span>'
+    +'<span class="chip">'+grpLabel('rare')+' <b>'+counts.rare+'</b></span><span class="chip">'+grpLabel('mid')+' <b>'+counts.mid+'</b></span><span class="chip">'+grpLabel('common')+' <b>'+counts.common+'</b></span>'
+    +(currentUser?'<span class="chip"><b>'+fmtNum(portTotalCount)+'</b>'+L(' in port',' 港内舰船')+'</span>':'');
+}
+function escapeHtml(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(ch){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]}); }
+function showLoginError(msg){
+  var e=document.getElementById('loginError'); if(!e) return;
+  if(msg){ e.hidden=false; e.textContent=txt(msg); } else { e.hidden=true; e.textContent=''; }
+}
+function renderLoginPanel(){
+  var out=document.getElementById('loginLoggedOut'), inn=document.getElementById('loginLoggedIn');
+  var hint=document.getElementById('loginHint');
+  var paste=document.getElementById('loginPasteRow');
+  if(!out||!inn) return;
+  if(hint) hint.hidden=!!currentUser;
+  if(paste) paste.hidden=!!currentUser;
+  if(currentUser){
+    out.hidden=true; inn.hidden=false;
+    var counts=computePoolCounts();
+    var t=document.getElementById('loginUserTitle'); if(t) t.textContent=currentUser.nickname+' · '+realmLabel(currentUser.realm);
+    var d=document.getElementById('loginUserDetail'); if(d) d.textContent='';
+    var s=document.getElementById('loginStatusIn'); if(s) s.textContent=loginLoading? L('Loading…','加载中…') : '';
+  } else {
+    out.hidden=false; inn.hidden=true;
+    var s2=document.getElementById('loginStatus'); if(s2) s2.textContent=loginLoading? L('Loading…','加载中…') : '';
+  }
+}
+function saveUser(u){ try{ localStorage.setItem(LS_KEY, JSON.stringify(u)); }catch(e){} }
+function loadSavedUser(){ try{ var raw=localStorage.getItem(LS_KEY); if(!raw) return null; var u=JSON.parse(raw); if(!u||!u.access_token||!u.account_id||!u.realm) return null; if(u.expires_at && Number(u.expires_at) <= Math.floor(Date.now()/1000)) return null; return u; }catch(e){ return null; } }
+function clearSavedUser(){ try{ localStorage.removeItem(LS_KEY); }catch(e){} }
+function doLogin(realm){
+  var expiresAt=Math.floor(Date.now()/1000)+86400;
+  var redirectUri=window.location.origin+window.location.pathname+'?realm='+realm;
+  var authUrl='https://api.worldoftanks.'+realm+'/wot/auth/login/?application_id='+APP_ID+'&expires_at='+expiresAt+'&redirect_uri='+redirectUri;
+  window.location.href=authUrl;
+}
+function doLogout(){
+  clearSavedUser(); currentUser=null; portIdSet=null; portTotalCount=0; ownedInPoolCount=0; loginLoading=false;
+  showLoginError(''); renderLoginPanel(); renderStateChips(); resetSession();
+}
+/* Shared auth completion: used by the on-load callback parser and the paste-back bridge. */
+function userFromAuthParams(params){
+  if(!params) return null;
+  if(params.get('status')!=='ok' || !params.get('access_token') || !params.get('account_id')) return null;
+  return {realm:params.get('realm')||'com', access_token:params.get('access_token'), account_id:params.get('account_id'), nickname:params.get('nickname')||'', expires_at:Number(params.get('expires_at')||0)};
+}
+function handleAuthParams(params){
+  var u=userFromAuthParams(params);
+  if(!u) return false;
+  saveUser(u);
+  fetchPortAndPersonalize(u);
+  return true;
+}
+function parseCallback(){
+  try{
+    var params=new URLSearchParams(window.location.search);
+    var fromTop=false;
+    if(params.get('status')!=='ok'){
+      try{
+        if(window.top && window.top!==window.self){
+          var topParams=new URLSearchParams(window.top.location.search);
+          if(topParams.get('status')){
+            params=topParams;
+            fromTop=true;
+          }
+        }
+      }catch(e){}
+    }
+    function stripCallbackParams(){
+      try{ history.replaceState(null,'',window.location.origin+window.location.pathname); }catch(e){}
+      if(fromTop){
+        try{ window.top.history.replaceState(null,'',window.top.location.origin+window.top.location.pathname); }catch(e){}
+      }
+    }
+    if(userFromAuthParams(params)){
+      /* Strip credentials from the address bar immediately */
+      stripCallbackParams();
+      return handleAuthParams(params);
+    }
+    if(params.get('status') && params.get('status')!=='ok'){
+      stripCallbackParams();
+      showLoginError(TX('Login didn\'t complete — playing with the full pool.','登录未完成 — 使用完整船池游玩。'));
+    }
+  }catch(e){}
+  return false;
+}
+function handlePastedLink(){
+  var inp=document.getElementById('pasteLink');
+  var raw=inp? (inp.value||'').trim() : '';
+  var params=null;
+  if(raw){
+    try{ params=new URL(raw).searchParams; }catch(e){ params=null; }
+    if(!params || !params.get('status')){
+      var q=raw;
+      var qi=q.indexOf('?'); if(qi>=0) q=q.substring(qi+1);
+      var hi=q.indexOf('#'); if(hi>=0) q=q.substring(0,hi);
+      try{ params=new URLSearchParams(q); }catch(e){ params=null; }
+    }
+  }
+  if(params && handleAuthParams(params)){
+    if(inp) inp.value='';
+    showLoginError('');
+  } else {
+    showLoginError(TX('That link doesn\'t look right — paste the full link from the address bar after WG login.','链接无效，请粘贴登录后地址栏里的完整链接'));
+  }
+}
+function fetchPortAndPersonalize(user){
+  loginLoading=true; renderLoginPanel();
+  var qs=new URLSearchParams({application_id:APP_ID, account_id:String(user.account_id), access_token:user.access_token, fields:'private.port', extra:'private.port'});
+  return fetch('https://api.worldofwarships.'+user.realm+'/wows/account/info/?'+qs.toString())
+    .then(function(res){ if(!res.ok) throw new Error('HTTP '+res.status); return res.json(); })
+    .then(function(json){
+      if(!json || json.status!=='ok' || !json.data || !json.data[String(user.account_id)] || !json.data[String(user.account_id)].private || !Array.isArray(json.data[String(user.account_id)].private.port)){
+        throw new Error('No port data returned');
+      }
+      var port=json.data[String(user.account_id)].private.port;
+      portIdSet={}; port.forEach(function(id){ portIdSet[String(id)]=1; });
+      portTotalCount=port.length;
+      var counts=computePoolCounts();
+      ownedInPoolCount=143-counts.total;
+      currentUser=user; loginLoading=false;
+      showLoginError(''); renderLoginPanel(); renderStateChips(); resetSession();
+    })
+    .catch(function(){
+      loginLoading=false; currentUser=null; portIdSet=null; portTotalCount=0; ownedInPoolCount=0;
+      clearSavedUser();
+      showLoginError(TX('Couldn\'t load your port — playing with the full pool.','无法加载你的港口 — 使用完整船池游玩。'));
+      renderLoginPanel(); renderStateChips(); resetSession();
+    });
+}
+var TYPES=[
+ {key:'gift', label:"Santa's Gift", short:'Gift', labelZh:'圣诞礼物补给箱', shortZh:'礼物', p:{rare:0.001,mid:0.004,common:0.02}, pity:100, doubloons:250, dollars:1},
+ {key:'mega', label:"Santa's Mega Gift", short:'Mega', labelZh:'圣诞超级礼物补给箱', shortZh:'超级', p:{rare:0.01,mid:0.03,common:0.12}, pity:15, doubloons:1250, dollars:5},
+ {key:'ultra',label:"Santa's Ultra Gift", short:'Ultra', labelZh:'圣诞特级礼物补给箱', shortZh:'特级', p:{rare:0.03,mid:0.09,common:0.20}, pity:7, doubloons:0, dollars:10}
+];
+function typeByKey(k){ for(var i=0;i<TYPES.length;i++) if(TYPES[i].key===k) return TYPES[i]; return TYPES[1]; }
+function costTextFor(n, type){
+  if(type.key==='ultra') return n+' × '+typeShort(type)+' = $'+fmtNum(n*10)+L(' (cash only)','（仅现金）');
+  var d=n*type.doubloons; return n+' × '+typeShort(type)+' = '+fmtNum(d)+L(' doubloons',' 达布隆')+' ≈ $'+fmtNum(d/250);
+}
+function updateBatchCost(){
+  var sel=typeByKey(selectedType);
+  var n=Math.max(1,Math.min(500,parseInt(document.getElementById('inOpenX').value)||1));
+  var bc=document.getElementById('batchCost'); if(bc) bc.textContent=L('Open ','打开 ')+costTextFor(n, sel);
+  var bc10=document.getElementById('batchCost10'); if(bc10) bc10.textContent='Open '+costTextFor(1, sel)+' · Open '+costTextFor(10, sel);
+}
+function roman(t){return {10:'X',9:'IX',8:'VIII',7:'VII',6:'VI',5:'V'}[t]||t}
+function fmtPct(x){ if(x===0) return '0%'; if(x<0.001) return '<0.1%'; return (x*100).toFixed(1)+'%'; }
+function fmtNum(n){return n.toLocaleString(LANG==='zh'?'zh-CN':'en-US')}
+
+function buildPools(){
+  function mapPool(list, group){
+    return list.filter(function(s){ return !isOwned(s[2]); }).map(function(s,i){return {name:s[0],zh:SHIP_ZH[s[2]]||null,tier:s[1],ship_id:s[2],group:group,idx:group+'-'+s[2],coal:!!COAL_NAMES[s[0]]}});
+  }
+  return { rare: mapPool(FULL_RARE,'rare'), mid: mapPool(FULL_MID,'mid'), common: mapPool(FULL_COMMON,'common') };
+}
+
+function pickGroupRenorm(type, pools){
+  var entries=[];
+  ['rare','mid','common'].forEach(function(g){ if(pools[g].length>0) entries.push({g:g,w:type.p[g]}); });
+  if(!entries.length) return null;
+  var tot=entries.reduce(function(a,e){return a+e.w},0); var r=Math.random()*tot;
+  for(var i=0;i<entries.length;i++){ r-=entries[i].w; if(r<=0) return entries[i].g; }
+  return entries[entries.length-1].g;
+}
+function totalShipProb(type){ return type.p.rare+type.p.mid+type.p.common; }
+function activeGroups(pools){ return ['rare','mid','common'].filter(function(g){ return pools[g].length>0; }); }
+function effectiveProbs(type, pools){
+  var total=totalShipProb(type); var active=activeGroups(pools);
+  var sumActive=active.reduce(function(a,g){return a+type.p[g]},0);
+  var eff={rare:0,mid:0,common:0,total:total,active:active};
+  if(!active.length){ eff.total=0; return eff; }
+  active.forEach(function(g){ eff[g]= total * (type.p[g]/sumActive); });
+  return eff;
+}
+function rollGroupNormal(type, pools){
+  var active=activeGroups(pools);
+  if(!active.length) return null;
+  var eff=effectiveProbs(type, pools);
+  var r=Math.random();
+  if(r>=eff.total) return null;
+  var cum=0;
+  for(var i=0;i<active.length;i++){ var g=active[i]; cum+=eff[g]; if(r<cum) return g; }
+  return active[active.length-1];
+}
+function fmtEff(p){
+  if(!p) return '—';
+  var v=p*100; var s=(Math.abs(v-Math.round(v))<0.001)? String(Math.round(v)) : String(Math.round(v*10)/10);
+  return s+'%';
+}
+
+/* ---------- FULL DROP TABLES (15.11 dev blog) ---------- */
+var BONUS_TYPES=[['Credits','银币'],['Ship XP','舰船经验'],['Commander XP','指挥官经验'],['Free XP','全局经验']];
+function pickBonus(){ var p=BONUS_TYPES[Math.floor(Math.random()*BONUS_TYPES.length)]; return {en:p[0], zh:p[1]}; }
+function bonusText(n, kindEn, kindZh, b){ return TX(n+'× '+kindEn+' bonus ('+b.en+')', n+'× '+kindZh+'经济加成（'+b.zh+'）'); }
+function emptyRewards(){ return {doubloons:0,coal:0,credits:0,premium:0,eliteXP:0,rp:0,steel:0,portSlots:0,goldenWon:0,uncommon:0,rare:0,epic:0,signals:0}; }
+var GOLDEN_NORMAL=['Latouche-Tréville','Rodina','Tōgasa'];
+var GOLDEN_LEGACY=['Rodina G','Tōgasa G','Somers G','Tywysog Cymru'];
+var GOLDEN_TYPE={key:'golden', label:'Golden Gift', short:'Golden', labelZh:'金色礼物补给箱', shortZh:'金色', pity:10};
+function rollTable(table){
+  var total=0; for(var i=0;i<table.length;i++) total+=table[i].p;
+  if(total<=0) return {text:'—'};
+  var r=Math.random()*total;
+  for(var j=0;j<table.length;j++){ r-=table[j].p; if(r<=0) return table[j].make(); }
+  return table[table.length-1].make();
+}
+function goldenDropOutcome(){
+  session.rewards.goldenWon++; session.goldenInventory++;
+  return {text:TX('Golden Gift container','金色礼物补给箱'), golden:true};
+}
+function santaTable(type){
+  var shipP=activeGroups(session.pools).length? totalShipProb(type) : 0;
+  var shipEntry={p:shipP, make:function(){ var s=pickShipByEff(type); return s? {ship:s} : {text:'—'}; }};
+  if(type.key==='gift') return [
+    {p:0.05, make:function(){ session.rewards.doubloons+=500; return {text:TX('500 Doubloons','500 达布隆')}; }},
+    {p:0.01, make:goldenDropOutcome},
+    {p:0.07, make:function(){ session.rewards.coal+=2500; return {text:TX('2,500 Coal','2,500 煤炭')}; }},
+    {p:0.01, make:function(){ session.rewards.premium+=30; return {text:TX('30 days Premium','30 天高级账号')}; }},
+    {p:0.10, make:function(){ session.rewards.eliteXP+=20000; return {text:TX('20,000 Elite Commander XP','20,000 精英指挥官经验')}; }},
+    {p:0.10, make:function(){ session.rewards.credits+=400000; return {text:TX('400,000 Credits','400,000 银币')}; }},
+    {p:0.055, make:function(){ session.rewards.portSlots+=1; return {text:TX('1× Port Slot','1× 港口船位')}; }},
+    {p:0.10, make:function(){ session.rewards.rare+=3; return {text:bonusText(3,'Rare','稀有',pickBonus())}; }},
+    {p:0.24, make:function(){ session.rewards.uncommon+=12; return {text:bonusText(12,'Uncommon','普通',pickBonus())}; }},
+    {p:0.24, make:function(){ session.rewards.signals+=25; return {text:TX('25× Signal flags','25× 信号旗')}; }},
+    shipEntry
+  ];
+  if(type.key==='mega') return [
+    {p:0.05, make:function(){ session.rewards.doubloons+=2500; return {text:TX('2,500 Doubloons','2,500 达布隆')}; }},
+    {p:0.10, make:goldenDropOutcome},
+    {p:0.08, make:function(){ session.rewards.coal+=12500; return {text:TX('12,500 Coal','12,500 煤炭')}; }},
+    {p:0.01, make:function(){ session.rewards.premium+=180; return {text:TX('180 days Premium','180 天高级账号')}; }},
+    {p:0.10, make:function(){ session.rewards.eliteXP+=100000; return {text:TX('100,000 Elite Commander XP','100,000 精英指挥官经验')}; }},
+    {p:0.10, make:function(){ session.rewards.credits+=2250000; return {text:TX('2,250,000 Credits','2,250,000 银币')}; }},
+    {p:0.32, make:function(){ session.rewards.rare+=20; return {text:bonusText(20,'Rare','稀有',pickBonus())}; }},
+    {p:0.08, make:function(){ session.rewards.epic+=7; return {text:bonusText(7,'Epic','史诗',pickBonus())}; }},
+    shipEntry
+  ];
+  // ultra slot 1
+  return [
+    {p:0.05, make:function(){ session.rewards.doubloons+=2500; return {text:TX('2,500 Doubloons','2,500 达布隆')}; }},
+    {p:0.40, make:function(){ session.rewards.coal+=6000; return {text:TX('6,000 Coal','6,000 煤炭')}; }},
+    {p:0.20, make:goldenDropOutcome},
+    {p:0.03, make:function(){ session.rewards.premium+=180; return {text:TX('180 days Premium','180 天高级账号')}; }},
+    shipEntry
+  ];
+}
+function ultraSlot3Table(){ return [
+  {p:0.05, make:function(){ session.rewards.doubloons+=2500; return {text:TX('2,500 Doubloons','2,500 达布隆')}; }},
+  {p:0.81, make:function(){ session.rewards.eliteXP+=37500; return {text:TX('37,500 Elite Commander XP','37,500 精英指挥官经验')}; }},
+  {p:0.14, make:function(){ session.rewards.coal+=6000; return {text:TX('6,000 Coal','6,000 煤炭')}; }}
+];}
+function takeFromPool(pool, group){
+  if(!pool.length) return null;
+  var idx=Math.floor(Math.random()*pool.length);
+  var name=pool.splice(idx,1)[0];
+  return {name:name, zh:GOLDEN_ZH[name]||null, tier:0, group:group};
+}
+function pickGoldenShip(){
+  var entries=[];
+  if(session.goldenNormal.length) entries.push({g:'golden', w:0.09999});
+  if(session.goldenLegacy.length) entries.push({g:'legacy', w:0.00001});
+  if(!entries.length) return null;
+  var tot=0; entries.forEach(function(e){ tot+=e.w; });
+  var r=Math.random()*tot, chosen=entries[entries.length-1];
+  for(var i=0;i<entries.length;i++){ r-=entries[i].w; if(r<=0){ chosen=entries[i]; break; } }
+  return chosen.g==='golden'? takeFromPool(session.goldenNormal,'golden') : takeFromPool(session.goldenLegacy,'legacy');
+}
+function goldenTable(){ return [
+  {p:0.60, make:function(){ session.rewards.epic+=7; return {text:bonusText(7,'Epic','史诗',pickBonus())}; }},
+  {p:0.20, make:function(){ session.rewards.rp+=3750; return {text:TX('3,750 Research Points','3,750 研发点')}; }},
+  {p:0.10, make:function(){ session.rewards.steel+=3000; return {text:TX('3,000 Steel','3,000 钢铁')}; }},
+  {p:session.goldenNormal.length? 0.09999 : 0, make:function(){ var s=takeFromPool(session.goldenNormal,'golden'); return s? {ship:s} : {text:bonusText(7,'Epic','史诗',pickBonus())}; }},
+  {p:session.goldenLegacy.length? 0.00001 : 0, make:function(){ var s=takeFromPool(session.goldenLegacy,'legacy'); return s? {ship:s} : {text:TX('3,000 Steel','3,000 钢铁')}; }}
+];}
+function pickShipByEff(type){
+  var eff=effectiveProbs(type, session.pools);
+  if(!eff.active.length) return null;
+  var r=Math.random()*eff.total, cum=0, g=eff.active[eff.active.length-1];
+  for(var i=0;i<eff.active.length;i++){ cum+=eff[eff.active[i]]; if(r<cum){ g=eff.active[i]; break; } }
+  var pool=session.pools[g]; if(!pool.length) return null;
+  var idx=Math.floor(Math.random()*pool.length);
+  return pool.splice(idx,1)[0];
+}
+function shipFromGroup(type, group){
+  if(!group) return null;
+  var pool=session.pools[group]; if(!pool || !pool.length) return null;
+  var idx=Math.floor(Math.random()*pool.length);
+  return pool.splice(idx,1)[0];
+}
+
+/* ---------- ROLL-BY-ROLL SESSION ---------- */
+var selectedType='mega';
+var session=null;
+function resetSession(){
+  var pools=buildPools();
+  session={pools:pools, initial:{rare:pools.rare.length,mid:pools.mid.length,common:pools.common.length}, log:[], acquired:[], counters:{gift:0,mega:0,ultra:0}, openedByType:{gift:0,mega:0,ultra:0}, total:0, logSeq:0,
+    rewards:emptyRewards(), goldenInventory:0, goldenOpened:0, goldenShipLess:0,
+    goldenNormal:GOLDEN_NORMAL.slice(), goldenLegacy:GOLDEN_LEGACY.slice()};
+  renderSession();
+}
+function rollOne(){
+  var type=typeByKey(selectedType);
+  var pityOn=document.getElementById('inPity').checked;
+  session.openedByType[type.key]++;
+  session.total=(session.openedByType.gift||0)+(session.openedByType.mega||0)+(session.openedByType.ultra||0);
+  var hasShips=activeGroups(session.pools).length>0;
+  var forced=pityOn && hasShips && (session.counters[type.key]+1>=type.pity);
+  var outcome;
+  if(forced){
+    var s=shipFromGroup(type, pickGroupRenorm(type, session.pools));
+    outcome=s? {ship:s} : rollTable(santaTable(type));
+  } else {
+    outcome=rollTable(santaTable(type));
+  }
+  var entry={n:++session.logSeq, type:type, ship:outcome.ship||null, forced:forced && !!outcome.ship, headline:outcome.text||'', goldenWin:!!outcome.golden, extras:[]};
+  if(type.key==='ultra'){
+    // Slot 2 — always 6x Epic bonus; Slot 3 — its own table. Headline stays Slot 1.
+    session.rewards.epic+=6;
+    var b2=pickBonus();
+    entry.extras.push(TX('Slot 2: 6× Epic bonus ('+b2.en+')','槽位 2：6× 史诗经济加成（'+b2.zh+'）'));
+    var o3=rollTable(ultraSlot3Table());
+    entry.extras.push({en:'Slot 3: '+((o3.text&&o3.text.en)||txt(o3.text)), zh:'槽位 3：'+((o3.text&&o3.text.zh)||txt(o3.text))});
+  }
+  if(entry.ship){ session.acquired.push(entry.ship); session.counters[type.key]=0; }
+  else { session.counters[type.key]++; }
+  session.log.unshift(entry);
+  return entry;
+}
+function rollBatch(n){ for(var i=0;i<n;i++) rollOne(); renderSession(true); }
+function rollGoldenOne(){
+  if(session.goldenInventory<=0) return null;
+  var pityOn=document.getElementById('inPity').checked;
+  session.goldenInventory--; session.goldenOpened++;
+  var hasShips=session.goldenNormal.length>0 || session.goldenLegacy.length>0;
+  var forced=pityOn && hasShips && (session.goldenShipLess+1>=GOLDEN_TYPE.pity);
+  var outcome;
+  if(forced){
+    var s=pickGoldenShip();
+    outcome=s? {ship:s} : rollTable(goldenTable());
+  } else {
+    outcome=rollTable(goldenTable());
+  }
+  var entry={n:++session.logSeq, type:GOLDEN_TYPE, ship:outcome.ship||null, forced:forced && !!outcome.ship, headline:outcome.text||'', goldenWin:false, extras:[], golden:true};
+  if(entry.ship){ session.acquired.push(entry.ship); session.goldenShipLess=0; }
+  else { session.goldenShipLess++; }
+  session.log.unshift(entry);
+  return entry;
+}
+function rollGoldenBatch(){
+  var guard=0;
+  while(session.goldenInventory>0 && guard<1000){ rollGoldenOne(); guard++; }
+  renderSession(true);
+}
+function renderSession(pop){
+  document.getElementById('pityGift').textContent=session.counters.gift+' / 100';
+  document.getElementById('pityMega').textContent=session.counters.mega+' / 15';
+  document.getElementById('pityUltra').textContent=session.counters.ultra+' / 7';
+  var pg=document.getElementById('pityGolden'); if(pg) pg.textContent=session.goldenShipLess+' / 10';
+  document.getElementById('sessOpened').textContent=session.total;
+  (function(){
+    var ob=session.openedByType||{gift:0,mega:0,ultra:0};
+    var doub=(ob.gift||0)*250+(ob.mega||0)*1250;
+    var ultraDollars=(ob.ultra||0)*10;
+    var won=session.rewards? session.rewards.doubloons : 0;
+    var net=doub-won;
+    var combinedNet=net/250+ultraDollars;
+    var cd=document.getElementById('costDoubloons'); if(cd) cd.textContent=fmtNum(doub)+L(' doubloons',' 达布隆');
+    var cdd=document.getElementById('costDoubloonDollars'); if(cdd) cdd.textContent='(≈ $'+fmtNum(doub/250)+')';
+    var cw=document.getElementById('costWonBack'); if(cw) cw.textContent=fmtNum(won)+L(' doubloons',' 达布隆');
+    var cn=document.getElementById('costNet'); if(cn) cn.textContent=fmtNum(net)+L(' doubloons',' 达布隆');
+    var cnd=document.getElementById('costNetDollars'); if(cnd) cnd.textContent='(≈ $'+fmtNum(net/250)+')';
+    var cu=document.getElementById('costUltraDollars'); if(cu) cu.textContent='$'+fmtNum(ultraDollars);
+    var cc2=document.getElementById('costCombined'); if(cc2) cc2.textContent='≈ $'+fmtNum(combinedNet);
+    var cb=document.getElementById('costBreakdown'); if(cb) cb.textContent=typeShort(typeByKey('gift'))+' ×'+(ob.gift||0)+' · '+typeShort(typeByKey('mega'))+' ×'+(ob.mega||0)+' · '+typeShort(typeByKey('ultra'))+' ×'+(ob.ultra||0);
+    if(typeof updateBatchCost==='function') updateBatchCost();
+  })();
+  // Golden Gift inventory + buttons
+  (function(){
+    var gc=document.getElementById('goldenCount');
+    if(gc) gc.textContent='×'+session.goldenInventory;
+    var gb=document.getElementById('goldenBar'); if(gb) gb.classList.toggle('has', session.goldenInventory>0);
+    var b1=document.getElementById('btnGolden'); if(b1) b1.disabled=session.goldenInventory<=0;
+    var b2=document.getElementById('btnGoldenAll'); if(b2) b2.disabled=session.goldenInventory<=0;
+  })();
+  // Rewards collected panel
+  (function(){
+    var rp=document.getElementById('rewardsPanel'); if(!rp) return;
+    var r=session.rewards;
+    var tiles=[
+      [L('Doubloons won','已赢达布隆'), fmtNum(r.doubloons), L('offsets your spend','抵扣花费')],
+      [L('Golden Gifts','金色礼物补给箱'), fmtNum(r.goldenWon), ''],
+      [L('Coal','煤炭'), fmtNum(r.coal), ''],
+      [L('Credits','银币'), fmtNum(r.credits), ''],
+      [L('Premium time','高级账号'), fmtNum(r.premium)+L(' days',' 天'), ''],
+      [L('Elite Commander XP','精英指挥官经验'), fmtNum(r.eliteXP), ''],
+      [L('Research Points','研发点'), fmtNum(r.rp), L('from Golden Gifts','来自金色礼物补给箱')],
+      [L('Steel','钢铁'), fmtNum(r.steel), L('from Golden Gifts','来自金色礼物补给箱')],
+      [L('Port Slots','港口船位'), fmtNum(r.portSlots), ''],
+      [L('Uncommon bonuses','普通经济加成'), fmtNum(r.uncommon), L('total items','总数量')],
+      [L('Rare bonuses','稀有经济加成'), fmtNum(r.rare), L('total items','总数量')],
+      [L('Epic bonuses','史诗经济加成'), fmtNum(r.epic), L('total items','总数量')],
+      [L('Signal flags','信号旗'), fmtNum(r.signals), L('total flags','总数量')]
+    ];
+    rp.innerHTML=tiles.map(function(t){ return '<div class="reward-tile"><small>'+t[0]+'</small><strong>'+t[1]+'</strong>'+(t[2]?'<span>'+t[2]+'</span>':'')+'</div>'; }).join('');
+  })();
+  document.getElementById('remRare').textContent=session.pools.rare.length+' / '+(session.initial?session.initial.rare:session.pools.rare.length);
+  document.getElementById('remMid').textContent=session.pools.mid.length+' / '+(session.initial?session.initial.mid:session.pools.mid.length);
+  document.getElementById('remCommon').textContent=session.pools.common.length+' / '+(session.initial?session.initial.common:session.pools.common.length);
+  // Live effective odds — total ship chance never changes, exhausted groups redistribute
+  TYPES.forEach(function(t){
+    var eff=effectiveProbs(t, session.pools);
+    var el=document.getElementById('effDesc-'+t.key);
+    if(el){
+      if(!eff.active.length) el.textContent=fmtEff(totalShipProb(t))+L(' ship',' 出船');
+      else el.textContent=fmtEff(eff.total)+L(' ship',' 出船');
+    }
+  });
+  (function(){
+    var sel=null; for(var i=0;i<TYPES.length;i++) if(TYPES[i].key===selectedType) sel=TYPES[i];
+    if(sel){
+      var eff2=effectiveProbs(sel, session.pools);
+      var lo=document.getElementById('liveOdds');
+      if(lo){
+        if(!eff2.active.length) lo.innerHTML='';
+        else lo.innerHTML=typeShort(sel)+': <b>'+fmtEff(eff2.rare)+' R · '+fmtEff(eff2.mid)+' M · '+fmtEff(eff2.common)+' C</b>';
+      }
+    }
+  })();
+  var rc=session.acquired.filter(function(s){return s.group==='rare'}).length;
+  var mc=session.acquired.filter(function(s){return s.group==='mid'}).length;
+  var cc=session.acquired.filter(function(s){return s.group==='common'}).length;
+  var gc2=session.acquired.filter(function(s){return s.group==='golden'||s.group==='legacy'}).length;
+  document.getElementById('acqTitle').textContent=L('Your ships — ','你的舰船 — ')+session.acquired.length+(session.acquired.length?'  ·  '+rc+' '+grpLabel('rare')+' · '+mc+' '+grpLabel('mid')+' · '+cc+' '+grpLabel('common')+(gc2?' · '+gc2+' '+L('Golden','金色'):''):'');
+  var last=session.log[0];
+  var lr=document.getElementById('lastRoll');
+  if(!last) lr.textContent=L('No rolls yet.','暂无记录。');
+  else if(last.ship) lr.innerHTML=L('Last roll (#','上次开箱（#')+last.n+L(', ','，')+typeShort(last.type)+L('): ','）：')+'<b style="color:#fff">'+shipDisplayHtml(last.ship)+'</b>'+(last.ship.tier?' — '+roman(last.ship.tier):'')+' '+grpLabel(last.ship.group)+(last.forced? L(' · PITY drop',' · 保底') : '');
+  else lr.innerHTML=L('Last roll (#','上次开箱（#')+last.n+L(', ','，')+typeShort(last.type)+L('): ','）：')+'<b style="color:#fff">'+txt(last.headline)+'</b>'+(last.extras&&last.extras.length?' · '+last.extras.map(function(x){return txt(x)}).join(' · '):'');
+  // log
+  var logEl=document.getElementById('rollLog');
+  if(!session.log.length){ logEl.innerHTML='<li><span class="noship">—</span></li>'; }
+  else{
+    logEl.innerHTML=session.log.slice(0,200).map(function(e){
+      if(e.ship) return '<li><span class="num">'+e.n+'</span><span class="tag">'+typeShort(e.type)+'</span><span class="ship-win" style="flex:1">'+shipDisplayHtml(e.ship)+(e.ship.tier?' <small style="color:var(--muted)">'+roman(e.ship.tier)+'</small>':'')+'</span><span class="grp '+e.ship.group+'">'+grpLabel(e.ship.group)+'</span>'+(e.forced?'<span class="tag">'+L('PITY','保底')+'</span>':'')+'</li>';
+      var extra=(e.extras&&e.extras.length)? '<span class="log-extra">'+e.extras.map(function(x){return txt(x)}).join('<br>')+'</span>' : '';
+      return '<li><span class="num">'+e.n+'</span><span class="tag">'+typeShort(e.type)+'</span><span style="flex:1"><span class="'+(e.goldenWin?'golden-win':'reward-txt')+'">'+txt(e.headline)+'</span>'+extra+'</span></li>';
+    }).join('')+(session.log.length>200?'<li><span class="noship">…</span></li>':'');
+  }
+  // acquired panel grouped
+  var panel=document.getElementById('acquiredPanel');
+  if(!session.acquired.length){ panel.innerHTML='<p class="empty">'+L('No ships yet — open a container.','还没有舰船 — 打开一个补给箱吧。')+'</p>'; }
+  else{
+    var html='';
+    [['rare',grpLabel('rare')],['mid',grpLabel('mid')],['common',grpLabel('common')],['golden',grpLabel('golden')],['legacy',grpLabel('legacy')]].forEach(function(gd){
+      var ships=session.acquired.filter(function(s){return s.group===gd[0]});
+      if(!ships.length) return;
+      html+='<div class="acq-group"><h4>'+gd[1]+' — '+ships.length+'</h4><div class="acq-chips">'+ships.map(function(s){return '<span class="acq-chip">'+shipDisplayHtml(s)+(s.tier?' · '+roman(s.tier):'')+'</span>'}).join('')+'</div></div>';
+    });
+    panel.innerHTML=html;
+  }
+  if(pop){ var h=document.getElementById('rollHero'); h.classList.remove('pop'); void h.offsetWidth; h.classList.add('pop'); }
+}
+/* ---------- language switching ---------- */
+function setT(id, s){ var e=document.getElementById(id); if(e) e.textContent=s; }
+function applyLang(){
+  document.documentElement.lang = LANG==='zh' ? 'zh-CN' : 'en';
+  document.title = L('Christmas Container Simulator','圣诞补给箱模拟器');
+  var zb=document.getElementById('langZh'), eb=document.getElementById('langEn');
+  if(zb) zb.classList.toggle('active', LANG==='zh');
+  if(eb) eb.classList.toggle('active', LANG==='en');
+  var pt=document.getElementById('pageTitle'); if(pt) pt.innerHTML=L('Santa\'s Containers <span>🎄</span>','圣诞补给箱 <span>🎄</span>');
+  setT('subTitle', L('Open Santa containers and see which ships drop for you.','打开圣诞补给箱，看看你能开出哪些舰船。'));
+  setT('loginLbl', L('Your port:','你的港口：'));
+  setT('loginHint', L('Log in to sync your port automatically','登录后自动同步你的港口'));
+  var plEl=document.getElementById('pasteLink'); if(plEl) plEl.placeholder=L('Paste the link from the page you land on after WG login','把登录后跳转页面的链接粘贴到这里');
+  setT('btnPasteSync', L('Sync port','同步港口'));
+  document.querySelectorAll('[data-login-realm]').forEach(function(b){ b.textContent=L('Log in · ','登录 · ')+realmLabel(b.getAttribute('data-login-realm')); });
+  setT('btnLogout', L('Log out','退出登录'));
+  setT('tn-gift', typeLabel(typeByKey('gift')));
+  setT('tn-mega', typeLabel(typeByKey('mega')));
+  setT('tn-ultra', typeLabel(typeByKey('ultra')));
+  setT('price-gift', L('250 doubloons · ≈ $1','250 达布隆 · ≈ $1'));
+  setT('price-mega', L('1,250 doubloons · ≈ $5','1,250 达布隆 · ≈ $5'));
+  setT('price-ultra', L('$10 each','每个 $10'));
+  setT('btnRoll', L('🎲 Open container','🎲 打开补给箱'));
+  setT('btnRoll10', L('Open 10','打开 10 个'));
+  setT('btnRollX', L('Open X','打开 X 个'));
+  setT('btnReset', L('↺ Reset','↺ 重置'));
+  setT('pityLbl', L('Pity','保底'));
+  setT('pl-gift', typeShort(typeByKey('gift')));
+  setT('pl-mega', typeShort(typeByKey('mega')));
+  setT('pl-ultra', typeShort(typeByKey('ultra')));
+  setT('pl-golden', typeShort(GOLDEN_TYPE));
+  setT('costOpenedLbl', L('Opened','已打开'));
+  setT('costWonLbl', L('won back','赢回'));
+  setT('costNetLbl', L('net','净花费'));
+  setT('costUltraLbl', typeShort(typeByKey('ultra')));
+  setT('goldenTitle', L('✦ Golden Gift','✦ 金色礼物补给箱'));
+  setT('btnGolden', L('Open','打开'));
+  setT('btnGoldenAll', L('Open All','全部打开'));
+  setT('remLblRare', L('Rare left','稀有剩余'));
+  setT('remLblMid', L('Mid left','中级剩余'));
+  setT('remLblCommon', L('Common left','普通剩余'));
+  setT('rewardsTitle', L('Rewards','奖励'));
+  setT('rollsTitle', L('Rolls','开箱记录'));
+  setT('howSummary', L('How it works','玩法说明'));
+  var howEn=['Won ships leave the pool — no duplicates.','If a group runs out, its chance moves to the other groups; the total ship % never changes.','Pity is assumed from last year: Gift 100 · Mega 15 · Ultra 7 · Golden 10 ship-less in a row.','Golden Gifts drop from Santa containers and open separately.','Prices are last year\'s — 15.11 prices aren\'t published yet.','Login fetches your port via Wargaming and matches ships by exact ID; variants count separately. Golden ships aren\'t filtered by login.','Rates from the Closed Test 15.11 blog — may change before live.'];
+  var howZh=['已获得的舰船会离开船池 — 不会重复掉落。','某组舰船抽完后，其概率会转移到其他组；总出船概率不变。','保底按去年规则假设：礼物 100 · 超级 15 · 特级 7 · 金色 10 次无船触发。','金色礼物补给箱从圣诞补给箱中掉落，单独开启。','价格为去年价格 — 15.11 价格尚未公布。','登录后通过 Wargaming 获取你的港口，按确切 ID 匹配舰船；不同版本分别计算。金色舰船不按登录过滤。','概率来自封闭测试 15.11 博客 — 正式上线前可能调整。'];
+  for(var i=0;i<7;i++) setT('how'+(i+1), LANG==='zh'? howZh[i] : howEn[i]);
+  var ix=document.getElementById('inOpenX'); if(ix) ix.setAttribute('aria-label', L('Batch size','数量'));
+}
+function setLang(l){
+  if(l!=='zh'&&l!=='en') return;
+  LANG=l;
+  try{ localStorage.setItem(LANG_KEY, l); }catch(e){}
+  applyLang(); renderLoginPanel(); renderStateChips();
+  if(session) renderSession();
+}
+document.querySelectorAll('.type-btn').forEach(function(b){
+  b.addEventListener('click',function(){
+    document.querySelectorAll('.type-btn').forEach(function(x){x.classList.remove('active')});
+    b.classList.add('active'); selectedType=b.getAttribute('data-type'); renderSession();
+  });
+});
+document.getElementById('btnRoll').addEventListener('click',function(){ rollOne(); renderSession(true); });
+document.getElementById('btnRoll10').addEventListener('click',function(){ rollBatch(10); });
+document.getElementById('btnRollX').addEventListener('click',function(){
+  var n=Math.max(1,Math.min(500,parseInt(document.getElementById('inOpenX').value)||1)); rollBatch(n);
+});
+document.getElementById('btnReset').addEventListener('click',function(){ resetSession(); });
+document.getElementById('btnGolden').addEventListener('click',function(){ rollGoldenOne(); renderSession(true); });
+document.getElementById('btnGoldenAll').addEventListener('click',function(){ rollGoldenBatch(); });
+document.getElementById('inOpenX').addEventListener('input',function(){ updateBatchCost(); });
+document.getElementById('inOpenX').addEventListener('change',function(){ updateBatchCost(); });
+document.getElementById('inPity').addEventListener('change',function(){ renderSession(); });
+document.querySelectorAll('[data-login-realm]').forEach(function(b){ b.addEventListener('click',function(){ doLogin(b.getAttribute('data-login-realm')); }); });
+var loBtn=document.getElementById('btnLogout'); if(loBtn) loBtn.addEventListener('click',function(){ doLogout(); });
+var psBtn=document.getElementById('btnPasteSync'); if(psBtn) psBtn.addEventListener('click',function(){ handlePastedLink(); });
+var plInp=document.getElementById('pasteLink'); if(plInp) plInp.addEventListener('keydown',function(ev){ if(ev.key==='Enter'){ ev.preventDefault(); handlePastedLink(); } });
+var lzBtn=document.getElementById('langZh'); if(lzBtn) lzBtn.addEventListener('click',function(){ setLang('zh'); });
+var leBtn=document.getElementById('langEn'); if(leBtn) leBtn.addEventListener('click',function(){ setLang('en'); });
+applyLang();
+renderLoginPanel(); renderStateChips(); resetSession();
+(function(){ var handled=parseCallback(); if(!handled){ var u=loadSavedUser(); if(u) fetchPortAndPersonalize(u); } })();
+
+</script>
+</body>
+</html>
