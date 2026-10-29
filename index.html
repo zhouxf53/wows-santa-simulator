@@ -243,7 +243,7 @@ details.how ul{margin:10px 0 4px;padding-left:18px;color:var(--muted);font-size:
       <button class="type-btn active" data-type="mega"><strong id="tn-mega">圣诞超级礼物补给箱</strong><span id="effDesc-mega">16% 出船</span><span class="price-line" id="price-mega">1,250 达布隆 · ≈ $5</span></button>
       <button class="type-btn" data-type="ultra"><strong id="tn-ultra">圣诞特级礼物补给箱</strong><span id="effDesc-ultra">32% 出船</span><span class="price-line" id="price-ultra">每个 $10</span></button>
     </div>
-    <button class="btn-dice" id="btnRoll">🎲 打开补给箱</button>
+    <button class="btn-dice" id="btnRoll">🎲 打开 20 个</button>
     <div class="roll-actions">
       <button class="btn-sec" id="btnRoll10">打开 10 个</button>
       <span class="openx"><input type="number" id="inOpenX" aria-label="数量" value="50" min="1" max="500"><button class="btn-sec" id="btnRollX">打开 X 个</button></span>
@@ -834,7 +834,7 @@ function applyLang(){
   setT('price-gift', L('250 doubloons · ≈ $1','250 达布隆 · ≈ $1'));
   setT('price-mega', L('1,250 doubloons · ≈ $5','1,250 达布隆 · ≈ $5'));
   setT('price-ultra', L('$10 each','每个 $10'));
-  setT('btnRoll', L('🎲 Open container','🎲 打开补给箱'));
+  setT('btnRoll', L('🎲 Open 20','🎲 打开 20 个'));
   setT('btnRoll10', L('Open 10','打开 10 个'));
   setT('btnRollX', L('Open X','打开 X 个'));
   setT('btnReset', L('↺ Reset','↺ 重置'));
@@ -874,7 +874,7 @@ document.querySelectorAll('.type-btn').forEach(function(b){
     b.classList.add('active'); selectedType=b.getAttribute('data-type'); renderSession();
   });
 });
-document.getElementById('btnRoll').addEventListener('click',function(){ rollOne(); renderSession(true); });
+document.getElementById('btnRoll').addEventListener('click',function(){ rollBatch(20); });
 document.getElementById('btnRoll10').addEventListener('click',function(){ rollBatch(10); });
 document.getElementById('btnRollX').addEventListener('click',function(){
   var n=Math.max(1,Math.min(500,parseInt(document.getElementById('inOpenX').value)||1)); rollBatch(n);
