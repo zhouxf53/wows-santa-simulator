@@ -246,10 +246,10 @@ details.how ul{margin:10px 0 4px;padding-left:18px;color:var(--muted);font-size:
     <button class="btn-dice" id="btnRoll">🎲 打开 20 个</button>
     <div class="roll-actions">
       <button class="btn-sec" id="btnRoll10">打开 10 个</button>
-      <span class="openx"><input type="number" id="inOpenX" aria-label="数量" value="50" min="1" max="500"><button class="btn-sec" id="btnRollX">打开 X 个</button></span>
+      <span class="openx"><input type="number" id="inOpenX" aria-label="数量" value="20" min="1" max="500"></span>
       <button class="btn-reset" id="btnReset">↺ 重置</button>
     </div>
-    <p class="hint" id="batchCost" style="margin:8px 0 0">打开 50 × 超级 = 62,500 达布隆 ≈ $250</p>
+    <p class="hint" id="batchCost" style="margin:8px 0 0">打开 20 × 超级 = 25,000 达布隆 ≈ $100</p>
     <div class="tinyline">
       <label><input type="checkbox" id="inPity" checked> <span id="pityLbl">保底</span></label>
       <span><span id="pl-gift">礼物</span> <b id="pityGift">0 / 100</b></span>
@@ -497,9 +497,11 @@ function costTextFor(n, type){
   if(type.key==='ultra') return n+' × '+typeShort(type)+' = $'+fmtNum(n*10)+L(' (cash only)','（仅现金）');
   var d=n*type.doubloons; return n+' × '+typeShort(type)+' = '+fmtNum(d)+L(' doubloons',' 达布隆')+' ≈ $'+fmtNum(d/250);
 }
+function openCount(){ var el=document.getElementById('inOpenX'); return Math.max(1,Math.min(500,parseInt(el&&el.value)||20)); }
 function updateBatchCost(){
   var sel=typeByKey(selectedType);
-  var n=Math.max(1,Math.min(500,parseInt(document.getElementById('inOpenX').value)||1));
+  var n=openCount();
+  var br=document.getElementById('btnRoll'); if(br) br.textContent=L('🎲 Open '+n,'🎲 打开 '+n+' 个');
   var bc=document.getElementById('batchCost'); if(bc) bc.textContent=L('Open ','打开 ')+costTextFor(n, sel);
   var bc10=document.getElementById('batchCost10'); if(bc10) bc10.textContent='Open '+costTextFor(1, sel)+' · Open '+costTextFor(10, sel);
 }
@@ -884,9 +886,8 @@ function applyLang(){
   setT('price-gift', L('250 doubloons · ≈ $1','250 达布隆 · ≈ $1'));
   setT('price-mega', L('1,250 doubloons · ≈ $5','1,250 达布隆 · ≈ $5'));
   setT('price-ultra', L('$10 each','每个 $10'));
-  setT('btnRoll', L('🎲 Open 20','🎲 打开 20 个'));
+  setT('btnRoll', L('🎲 Open '+openCount(),'🎲 打开 '+openCount()+' 个'));
   setT('btnRoll10', L('Open 10','打开 10 个'));
-  setT('btnRollX', L('Open X','打开 X 个'));
   setT('btnReset', L('↺ Reset','↺ 重置'));
   setT('pityLbl', L('Pity','保底'));
   setT('pl-gift', typeShort(typeByKey('gift')));
@@ -927,11 +928,8 @@ document.querySelectorAll('.type-btn').forEach(function(b){
     b.classList.add('active'); selectedType=b.getAttribute('data-type'); renderSession();
   });
 });
-document.getElementById('btnRoll').addEventListener('click',function(){ rollBatch(20); });
+document.getElementById('btnRoll').addEventListener('click',function(){ rollBatch(openCount()); });
 document.getElementById('btnRoll10').addEventListener('click',function(){ rollBatch(10); });
-document.getElementById('btnRollX').addEventListener('click',function(){
-  var n=Math.max(1,Math.min(500,parseInt(document.getElementById('inOpenX').value)||1)); rollBatch(n);
-});
 document.getElementById('btnReset').addEventListener('click',function(){ resetSession(); });
 document.getElementById('btnGolden').addEventListener('click',function(){ rollGoldenOne(); renderSession(true); });
 document.getElementById('btnGoldenAll').addEventListener('click',function(){ rollGoldenBatch(); });
