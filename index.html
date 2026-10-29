@@ -265,7 +265,7 @@ details.how ul{margin:10px 0 4px;padding-left:18px;color:var(--muted);font-size:
     <button class="btn-dice" id="btnRoll">🎲 打开 20 个</button>
     <div class="roll-actions">
       <button class="btn-sec" id="btnRoll10">打开 10 个</button>
-      <span class="openx"><input type="number" id="inOpenX" aria-label="数量" value="20" min="1" max="500"></span>
+      <span class="openx"><input type="number" id="inOpenX" aria-label="数量" value="20" min="1" max="9999"></span>
       <button class="btn-reset" id="btnReset">↺ 重置</button>
     </div>
     <p class="hint" id="batchCost" style="margin:8px 0 0">打开 20 × 超级 = 25,000 达布隆 ≈ $100</p>
@@ -518,7 +518,7 @@ function costTextFor(n, type){
   if(type.key==='ultra') return n+' × '+typeShort(type)+' = $'+fmtNum(n*10)+L(' (cash only)','（仅现金）');
   var d=n*type.doubloons; return n+' × '+typeShort(type)+' = '+fmtNum(d)+L(' doubloons',' 达布隆')+' ≈ $'+fmtNum(d/250);
 }
-function openCount(){ var el=document.getElementById('inOpenX'); return Math.max(1,Math.min(500,parseInt(el&&el.value)||20)); }
+function openCount(){ var el=document.getElementById('inOpenX'); return Math.max(1,Math.min(9999,parseInt(el&&el.value)||20)); }
 function updateBatchCost(){
   var sel=typeByKey(selectedType);
   var n=openCount();
@@ -1011,7 +1011,7 @@ document.getElementById('btnBF').addEventListener('click',function(){ rollBFOne(
 document.getElementById('btnBFAll').addEventListener('click',function(){ rollBFBatch(); });
 var cbEl=document.getElementById('celebrateBanner'); if(cbEl) cbEl.addEventListener('click', hideCelebration);
 document.getElementById('inOpenX').addEventListener('input',function(){ updateBatchCost(); });
-document.getElementById('inOpenX').addEventListener('change',function(){ updateBatchCost(); });
+document.getElementById('inOpenX').addEventListener('change',function(){ var el=document.getElementById('inOpenX'); var n=openCount(); if(String(n)!==el.value) el.value=n; updateBatchCost(); });
 document.getElementById('inPity').addEventListener('change',function(){ renderSession(); });
 document.querySelectorAll('[data-login-realm]').forEach(function(b){ b.addEventListener('click',function(){ doLogin(b.getAttribute('data-login-realm')); }); });
 var loBtn=document.getElementById('btnLogout'); if(loBtn) loBtn.addEventListener('click',function(){ doLogout(); });
