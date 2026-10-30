@@ -230,7 +230,8 @@ details.how ul{margin:10px 0 4px;padding-left:18px;color:var(--muted);font-size:
 .share-box img{width:100%;height:auto;border-radius:14px;box-shadow:0 12px 44px rgba(0,0,0,.6)}
 .share-btns{display:flex;gap:9px;margin-top:13px;justify-content:center;flex-wrap:wrap}
 .share-btns .btn-gold,.share-btns .btn-gold-sec{text-decoration:none;display:inline-block}
-.pool-fold{margin-top:12px;background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+.pool-fold{margin-top:16px;background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+.pool-item .ship-en-sub{display:block;margin-top:1px}
 .pool-fold summary{cursor:pointer;font-weight:800;font-size:13px;color:#cfe3f5;display:flex;gap:8px;align-items:center;flex-wrap:wrap;list-style:none}
 .pool-fold summary::-webkit-details-marker{display:none}
 .pool-fold summary::after{content:'▸';margin-left:auto;color:var(--muted2);font-size:14px}
@@ -386,6 +387,7 @@ details.how ul{margin:10px 0 4px;padding-left:18px;color:var(--muted);font-size:
           <button class="btn-sec btn-mini" id="poolClearAll" type="button">清空全部</button>
         </div>
         <div id="poolGroups"></div>
+        <div style="text-align:right;margin-top:12px"><button class="btn-sec btn-mini" id="poolCollapseBtn" type="button">收起 ▴</button></div>
       </div>
     </details>
   </section>
@@ -830,7 +832,8 @@ function buildManualPoolUI(){
   wrap.querySelectorAll('.mp-all').forEach(function(b){ b.addEventListener('click',function(){ var g=b.getAttribute('data-group'); document.querySelectorAll('.mpChk[data-group="'+g+'"]').forEach(function(c){ c.checked=true; manualOwn[c.getAttribute('data-id')]=true; }); saveManual(); updateManualCounts(); resetSession(); }); });
   wrap.querySelectorAll('.mp-none').forEach(function(b){ b.addEventListener('click',function(){ var g=b.getAttribute('data-group'); document.querySelectorAll('.mpChk[data-group="'+g+'"]').forEach(function(c){ c.checked=false; delete manualOwn[c.getAttribute('data-id')]; }); saveManual(); updateManualCounts(); resetSession(); }); });
   var ca=document.getElementById('poolClearAll'); if(ca) ca.addEventListener('click',function(){ manualOwn={}; document.querySelectorAll('.mpChk').forEach(function(c){ c.checked=false; }); saveManual(); updateManualCounts(); resetSession(); });
-  var ps=document.getElementById('poolSearch'); if(ps) ps.addEventListener('input',function(){ var q=(ps.value||'').trim().toLowerCase(); document.querySelectorAll('.pool-item').forEach(function(it){ it.style.display=(!q || (it.getAttribute('data-name')||'').indexOf(q)>=0)? '' : 'none'; }); });
+  var ps=document.getElementById('poolSearch'); if(ps) ps.addEventListener('input',function(){ var q=(ps.value||'').trim().toLowerCase(); document.querySelectorAll('.pool-item').forEach(function(it){ it.style.display=(!q || (it.getAttribute('data-name')||'').indexOf(q)>=0)? '' : 'none'; }); document.querySelectorAll('.pool-group').forEach(function(gr){ var any=false; gr.querySelectorAll('.pool-item').forEach(function(it){ if(it.style.display!=='none') any=true; }); gr.style.display=any? '' : 'none'; }); });
+  var cb=document.getElementById('poolCollapseBtn'); if(cb) cb.addEventListener('click',function(){ var f=document.getElementById('poolFold'); if(f){ f.open=false; f.scrollIntoView({block:'nearest'}); } });
 }
 function updateManualCounts(){
   var fc=document.getElementById('poolFoldCount'); if(fc) fc.textContent=L('Ticked ','已勾选 ')+manualCount()+' / 143';
@@ -861,6 +864,7 @@ function resetSession(){
     rewards:emptyRewards(), goldenInventory:0, goldenOpened:0, goldenShipLess:0,
     goldenNormal:GOLDEN_NORMAL.filter(function(n){ return !convoyOwn[n]; }), goldenLegacy:GOLDEN_LEGACY.slice(),
     bfInventory:0, bfOpened:0, bfNoNj:0, bfNjOwned:false, celebrated:0};
+  renderStateChips();
   renderSession();
 }
 function rollOne(){
@@ -1050,9 +1054,9 @@ function renderSession(pop){
     ];
     rp.innerHTML=tiles.map(function(t){ return '<div class="reward-tile"><small>'+t[0]+'</small><strong>'+t[1]+'</strong>'+(t[2]?'<span>'+t[2]+'</span>':'')+'</div>'; }).join('');
   })();
-  document.getElementById('remRare').textContent=session.pools.rare.length+' / '+(session.initial?session.initial.rare:session.pools.rare.length);
-  document.getElementById('remMid').textContent=session.pools.mid.length+' / '+(session.initial?session.initial.mid:session.pools.mid.length);
-  document.getElementById('remCommon').textContent=session.pools.common.length+' / '+(session.initial?session.initial.common:session.pools.common.length);
+  document.getElementById('remRare').textContent=session.pools.rare.length+' / '+FULL_RARE.length;
+  document.getElementById('remMid').textContent=session.pools.mid.length+' / '+FULL_MID.length;
+  document.getElementById('remCommon').textContent=session.pools.common.length+' / '+FULL_COMMON.length;
   // Live effective odds — total ship chance never changes, exhausted groups redistribute
   TYPES.forEach(function(t){
     var eff=effectiveProbs(t, session.pools);
@@ -1180,6 +1184,7 @@ function applyLang(){
   setT('poolFoldHint', L('Can\'t sync by logging in (e.g. CN-server players)? Tick the ships you already own here — the sim treats them as owned, so they won\'t drop. Ticks are saved on this device; when logged in, your port takes over. Changing a tick resets the session.','无法登录同步（比如国服玩家）时，在这里勾选你已经拥有的船 — 模拟时按已拥有处理，不会掉落。勾选会自动保存在本机；登录后以港口为准。修改勾选会重置当前模拟。'));
   setT('poolFoldNote', L('Logged in · using your port','已登录 · 以港口为准'));
   setT('poolClearAll', L('Clear all','清空全部'));
+  setT('poolCollapseBtn', L('Collapse ▴','收起 ▴'));
   var pse=document.getElementById('poolSearch'); if(pse) pse.setAttribute('placeholder', L('Search ships (Chinese / English)…','搜索船名（中文 / 英文）…'));
   if(typeof syncManualLang==='function') syncManualLang();
   var ix=document.getElementById('inOpenX'); if(ix) ix.setAttribute('aria-label', L('Batch size','数量'));
