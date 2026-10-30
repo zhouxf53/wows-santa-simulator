@@ -910,10 +910,13 @@ function rollGoldenBatch(){
   renderSession(true);
 }
 function renderSession(pop){
-  document.getElementById('pityGift').textContent=session.counters.gift+' / 100';
-  document.getElementById('pityMega').textContent=session.counters.mega+' / 15';
-  document.getElementById('pityUltra').textContent=session.counters.ultra+' / 7';
-  var pg=document.getElementById('pityGolden'); if(pg) pg.textContent=session.goldenShipLess+' / 10';
+  var pityOnNow=document.getElementById('inPity').checked;
+  var santaPoolEmpty=!activeGroups(session.pools).length;
+  function pillText(count, cap){ if(santaPoolEmpty) return L('Fleet complete','船已齐'); return pityOnNow? count+' / '+cap : String(count); }
+  document.getElementById('pityGift').textContent=pillText(session.counters.gift,100);
+  document.getElementById('pityMega').textContent=pillText(session.counters.mega,15);
+  document.getElementById('pityUltra').textContent=pillText(session.counters.ultra,7);
+  var pg=document.getElementById('pityGolden'); if(pg) pg.textContent= (!session.goldenNormal.length && !session.goldenLegacy.length)? L('Complete · BF 10%','已集齐 · 锻造 10%') : (pityOnNow? session.goldenShipLess+' / 10' : String(session.goldenShipLess));
   document.getElementById('sessOpened').textContent=session.total;
   (function(){
     var ob=session.openedByType||{gift:0,mega:0,ultra:0};
