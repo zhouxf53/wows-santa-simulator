@@ -1112,7 +1112,7 @@ function buildShareCard(){
   var rows=Math.max(1, Math.ceil(shown.length/2));
   var hasBF=ships.some(function(s){return s.group==='bf'});
   var statsTop=262, rowH=58;
-  var statsEnd=statsTop+5*rowH;
+  var statsEnd=statsTop+6*rowH;
   var bfH=hasBF? 106:0;
   var listHeadY=statsEnd+bfH+44;
   var listTop=listHeadY+54;
@@ -1140,8 +1140,9 @@ function buildShareCard(){
     [L('Opened','已打开'), fmtNum(totalOpened)+L(' total',' 个')+' — '+L('Gift','礼物')+' '+(ob.gift||0)+' · '+L('Mega','超级')+' '+(ob.mega||0)+' · '+L('Ultra','特级')+' '+(ob.ultra||0)+' · '+L('Golden','金色')+' '+session.goldenOpened+' · '+L('BF','锻造')+' '+session.bfOpened],
     [L('Spent','花费'), costStr],
     [L('Ships','出船'), fmtNum(ships.length)+L(' ships',' 艘')+' — '+L('Rare','稀有')+' '+cnt('rare')+' · '+L('Mid','中级')+' '+cnt('mid')+' · '+L('Common','普通')+' '+cnt('common')+' · '+L('Golden','金色')+' '+gc+(cnt('bf')?' · BF ★':'')],
-    [L('Collection','收藏'), (function(){ var ini=session.initial||{rare:42,mid:53,common:48}; var santaWon=cnt('rare')+cnt('mid')+cnt('common'); var ownedNow=143-(ini.rare+ini.mid+ini.common)+santaWon; var s=L('Santa pool ','圣诞池已集 ')+ownedNow+'/143'+(santaWon? L(' (+','（本次 +')+santaWon+(LANG==='zh'?'）':' this run)') : ''); if(typeof portIdSet!=='undefined'&&portIdSet) s+=' · '+L('Port: ','港口总舰船 ')+fmtNum(Object.keys(portIdSet).length)+L(' ships',' 艘'); return s; })()],
-    [L('Loot','资源'), L('Steel ','钢铁 ')+fmtNum(r.steel)+' · '+L('Coal ','煤炭 ')+fmtNum(r.coal)+' · '+L('Doubloons back ','赢回达布隆 ')+fmtNum(r.doubloons)+' · '+L('RP ','研发点 ')+fmtNum(r.rp)]
+    [L('Collection','收藏'), (function(){ var ini=session.initial||{rare:42,mid:53,common:48}; var santaWon=cnt('rare')+cnt('mid')+cnt('common'); var ownedNow=143-(ini.rare+ini.mid+ini.common)+santaWon; var s=L('Santa pool ','圣诞池已集 ')+ownedNow+'/143'+(santaWon? L(' (+','（本次 +')+santaWon+(LANG==='zh'?'）':' this run)') : ''); s+=' · '+L('Golden ships ','金色船 ')+gc+'/7'; if(typeof portIdSet!=='undefined'&&portIdSet) s+=' · '+L('Port: ','港口总舰船 ')+fmtNum(Object.keys(portIdSet).length)+L(' ships',' 艘'); return s; })()],
+    [L('Loot','资源'), L('Steel ','钢铁 ')+fmtNum(r.steel)+' · '+L('Coal ','煤炭 ')+fmtNum(r.coal)],
+    [L('More','其他'), L('Doubloons back ','赢回达布隆 ')+fmtNum(r.doubloons)+' · '+L('RP ','研发点 ')+fmtNum(r.rp)+' · '+L('Premium ','高级账号 ')+fmtNum(r.premium)+L(' days',' 天')]
   ];
   statRows.forEach(function(row,i){ var y=statsTop+i*rowH;
     ctx.fillStyle='#9db0c2'; ctx.font='600 27px system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif'; ctx.fillText(row[0], M, y);
@@ -1176,7 +1177,9 @@ function buildShareCard(){
     ctx.fillStyle=grpColor(s.group); ctx.beginPath(); ctx.arc(x+8,y-8,7,0,Math.PI*2); ctx.fill();
     ctx.fillStyle='#e8eef3';
     var nm=LANG==='zh'? (shipZhName(s)+(s.name&&shipZhName(s)!==s.name?' '+s.name:'')) : (s.name||'');
-    ctx.fillText(fitText(ctx, nm+(s.tier?' · '+roman(s.tier):''), 452), x+26, y);
+    var full=nm+(s.tier?' · '+roman(s.tier):'');
+    if(LANG==='zh' && ctx.measureText(full).width>452) full=shipZhName(s)+(s.tier?' · '+roman(s.tier):'');
+    ctx.fillText(fitText(ctx, full, 452), x+26, y);
   });
   if(extra>0){ ctx.fillStyle='#9db0c2'; ctx.font='24px system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif'; ctx.fillText(L('… and '+extra+' more ships','…… 还有 '+extra+' 艘'), M, listTop+rows*44+6); }
   var qr=qrcode(0,'M'); qr.addData(SITE_URL); qr.make();
