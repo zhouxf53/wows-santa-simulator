@@ -230,6 +230,25 @@ details.how ul{margin:10px 0 4px;padding-left:18px;color:var(--muted);font-size:
 .share-box img{width:100%;height:auto;border-radius:14px;box-shadow:0 12px 44px rgba(0,0,0,.6)}
 .share-btns{display:flex;gap:9px;margin-top:13px;justify-content:center;flex-wrap:wrap}
 .share-btns .btn-gold,.share-btns .btn-gold-sec{text-decoration:none;display:inline-block}
+.pool-fold{margin-top:12px;background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+.pool-fold summary{cursor:pointer;font-weight:800;font-size:13px;color:#cfe3f5;display:flex;gap:8px;align-items:center;flex-wrap:wrap;list-style:none}
+.pool-fold summary::-webkit-details-marker{display:none}
+.pool-fold summary::after{content:'▸';margin-left:auto;color:var(--muted2);font-size:14px}
+.pool-fold[open ] summary::after{content:'▾'}
+.pool-fold .chip{font-weight:700}
+.pool-fold-note{font-size:12px;color:var(--gold);font-weight:700}
+.pool-tools{display:flex;gap:8px;margin:10px 0 2px;flex-wrap:wrap}
+.pool-tools input[type=search]{flex:1 1 180px;min-width:0;background:#0a0f14;border:1px solid var(--line2);border-radius:999px;color:var(--text);padding:8px 13px;font-size:13px}
+.pool-tools input[type=search]::placeholder{color:var(--muted)}
+.btn-mini{padding:7px 11px;font-size:12.5px;border-radius:999px}
+.pool-group{margin-top:12px}
+.pool-group-head{display:flex;gap:7px;align-items:center;flex-wrap:wrap;margin-bottom:6px}
+.pool-group-head b{font-size:13px;color:#fff}
+.pool-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(178px,1fr));gap:3px 10px}
+.pool-item{display:flex;gap:6px;align-items:center;font-size:12.5px;color:var(--muted2);padding:4px 6px;border-radius:6px;cursor:pointer;font-weight:600}
+.pool-item:hover{background:#0a0f14;color:#fff}
+.pool-item input{width:16px;height:16px;accent-color:var(--gold);cursor:pointer;flex:none}
+.pool-fold.disabled .pool-fold-body{opacity:.45;pointer-events:none}
 .ship-en-sub{color:var(--muted);font-weight:500;font-size:11.5px;letter-spacing:0}
 .ship-win .ship-en-sub{font-weight:600}
 .acq-chip .ship-en-sub{font-size:11px}
@@ -258,6 +277,10 @@ details.how ul{margin:10px 0 4px;padding-left:18px;color:var(--muted);font-size:
   .golden-bar .btn-gold,.golden-bar .btn-gold-sec{flex:1;padding:11px 8px}
   .convoy-bar{gap:7px 10px;padding:9px 10px}
   .cv-opt{font-size:12.5px}
+  .pool-fold{padding:9px 10px}
+  .pool-grid{grid-template-columns:repeat(auto-fill,minmax(148px,1fr));gap:2px 6px}
+  .pool-item{font-size:12px;padding:4px 4px}
+  .pool-tools input[type=search]{font-size:12.5px}
   .panel{padding:14px 11px;border-radius:14px;margin-top:12px}
   .panel h2{font-size:16.5px}
   .remaining{gap:6px}
@@ -354,6 +377,17 @@ details.how ul{margin:10px 0 4px;padding-left:18px;color:var(--muted);font-size:
       <label class="cv-opt"><input type="checkbox" class="convoyChk" data-ship="Tōgasa"> <span>托加萨 Tōgasa</span></label>
     </div>
     <p class="hint" id="convoyHint" style="margin:8px 0 0">15.11 起这三艘金色船也可通过节日护航队活动兑换。勾选你打算换的 — 模拟时按已拥有处理：不再从金色箱掉落；三艘普通金色船全部拥有后，遗产船概率升至 10%。修改勾选会重置当前模拟。</p>
+    <details class="pool-fold" id="poolFold">
+      <summary><span id="poolFoldTitle">🎛 手动设置船池（国服 / 无国际服账号）</span><span class="chip" id="poolFoldCount">已勾选 0 / 143</span><span class="pool-fold-note" id="poolFoldNote" hidden>已登录 · 以港口为准</span></summary>
+      <div class="pool-fold-body">
+        <p class="hint" id="poolFoldHint" style="margin:8px 0 0">无法登录同步（比如国服玩家）时，在这里勾选你已经拥有的船 — 模拟时按已拥有处理，不会掉落。勾选会自动保存在本机；登录后以港口为准。修改勾选会重置当前模拟。</p>
+        <div class="pool-tools">
+          <input type="search" id="poolSearch" placeholder="搜索船名（中文 / 英文）…">
+          <button class="btn-sec btn-mini" id="poolClearAll" type="button">清空全部</button>
+        </div>
+        <div id="poolGroups"></div>
+      </div>
+    </details>
   </section>
 
   <section class="panel">
@@ -456,7 +490,7 @@ var portTotalCount=0;
 var ownedInPoolCount=0;
 var loginLoading=false;
 function realmLabel(r){ return r==='eu'? L('EU','欧洲') : (r==='asia'? L('ASIA','亚洲') : L('NA','北美')); }
-function isOwned(shipId){ return !!(portIdSet && portIdSet[String(shipId)]); }
+function isOwned(shipId){ if(portIdSet) return !!portIdSet[String(shipId)]; return !!manualOwn[String(shipId)]; }
 function computePoolCounts(){
   var r=FULL_RARE.filter(function(s){return !isOwned(s[2])}).length;
   var m=FULL_MID.filter(function(s){return !isOwned(s[2])}).length;
@@ -492,6 +526,7 @@ function renderLoginPanel(){
     out.hidden=false; inn.hidden=true;
     var s2=document.getElementById('loginStatus'); if(s2) s2.textContent=loginLoading? L('Loading…','加载中…') : '';
   }
+  if(typeof syncManualAvailability==='function') syncManualAvailability();
 }
 function saveUser(u){ try{ localStorage.setItem(LS_KEY, JSON.stringify(u)); }catch(e){} }
 function loadSavedUser(){ try{ var raw=localStorage.getItem(LS_KEY); if(!raw) return null; var u=JSON.parse(raw); if(!u||!u.access_token||!u.account_id||!u.realm) return null; if(u.expires_at && Number(u.expires_at) <= Math.floor(Date.now()/1000)) return null; return u; }catch(e){ return null; } }
@@ -772,6 +807,51 @@ function saveConvoy(){ try{ localStorage.setItem(CONVOY_KEY, JSON.stringify(conv
 function goldenPreOwnCount(){ return GOLDEN_NORMAL.filter(function(n){ return !!convoyOwn[n]; }).length; }
 function preOwnedGoldenShips(){ return GOLDEN_NORMAL.filter(function(n){ return !!convoyOwn[n]; }).map(function(n){ return {name:n, zh:GOLDEN_ZH[n]||null, tier:0, group:'golden', pre:true}; }); }
 function syncConvoyChecks(){ document.querySelectorAll('.convoyChk').forEach(function(c){ c.checked=!!convoyOwn[c.getAttribute('data-ship')]; }); }
+
+/* ---------- MANUAL POOL (checkbox = owned; for guests / CN-server players) ---------- */
+var MANUAL_KEY='wows-santa-manualpool-v1';
+var manualOwn={};
+function loadManual(){ try{ var j=JSON.parse(localStorage.getItem(MANUAL_KEY)||'{}'); Object.keys(j).forEach(function(k){ if(j[k]) manualOwn[k]=true; }); }catch(e){} }
+function saveManual(){ try{ localStorage.setItem(MANUAL_KEY, JSON.stringify(manualOwn)); }catch(e){} }
+function manualCount(){ return Object.keys(manualOwn).length; }
+var MANUAL_GROUPS=[['rare',function(){return FULL_RARE}],['mid',function(){return FULL_MID}],['common',function(){return FULL_COMMON}]];
+function buildManualPoolUI(){
+  var wrap=document.getElementById('poolGroups'); if(!wrap) return;
+  wrap.innerHTML=MANUAL_GROUPS.map(function(gd){
+    var g=gd[0], list=gd[1]();
+    return '<div class="pool-group" data-group="'+g+'"><div class="pool-group-head"><b><span class="mp-glabel">'+grpLabel(g)+'</span> · <span class="mp-gcount" data-group="'+g+'">0</span>/'+list.length+'</b>'
+      +'<button class="btn-sec btn-mini mp-all" data-group="'+g+'" type="button">'+L('Select all','全选')+'</button>'
+      +'<button class="btn-sec btn-mini mp-none" data-group="'+g+'" type="button">'+L('Clear','清空')+'</button></div>'
+      +'<div class="pool-grid">'+list.map(function(s){
+        return '<label class="pool-item" data-name="'+escapeHtml((s[0]+' '+(SHIP_ZH[s[2]]||'')).toLowerCase())+'"><input type="checkbox" class="mpChk" data-id="'+String(s[2])+'" data-group="'+g+'"><span class="mp-name">'+shipDisplayHtml({name:s[0], zh:SHIP_ZH[s[2]]||null, ship_id:s[2]})+'</span></label>';
+      }).join('')+'</div></div>';
+  }).join('');
+  wrap.querySelectorAll('.mpChk').forEach(function(c){ c.addEventListener('change',function(){ var id=c.getAttribute('data-id'); if(c.checked) manualOwn[id]=true; else delete manualOwn[id]; saveManual(); updateManualCounts(); resetSession(); }); });
+  wrap.querySelectorAll('.mp-all').forEach(function(b){ b.addEventListener('click',function(){ var g=b.getAttribute('data-group'); document.querySelectorAll('.mpChk[data-group="'+g+'"]').forEach(function(c){ c.checked=true; manualOwn[c.getAttribute('data-id')]=true; }); saveManual(); updateManualCounts(); resetSession(); }); });
+  wrap.querySelectorAll('.mp-none').forEach(function(b){ b.addEventListener('click',function(){ var g=b.getAttribute('data-group'); document.querySelectorAll('.mpChk[data-group="'+g+'"]').forEach(function(c){ c.checked=false; delete manualOwn[c.getAttribute('data-id')]; }); saveManual(); updateManualCounts(); resetSession(); }); });
+  var ca=document.getElementById('poolClearAll'); if(ca) ca.addEventListener('click',function(){ manualOwn={}; document.querySelectorAll('.mpChk').forEach(function(c){ c.checked=false; }); saveManual(); updateManualCounts(); resetSession(); });
+  var ps=document.getElementById('poolSearch'); if(ps) ps.addEventListener('input',function(){ var q=(ps.value||'').trim().toLowerCase(); document.querySelectorAll('.pool-item').forEach(function(it){ it.style.display=(!q || (it.getAttribute('data-name')||'').indexOf(q)>=0)? '' : 'none'; }); });
+}
+function updateManualCounts(){
+  var fc=document.getElementById('poolFoldCount'); if(fc) fc.textContent=L('Ticked ','已勾选 ')+manualCount()+' / 143';
+  ['rare','mid','common'].forEach(function(g){ var c=0; document.querySelectorAll('.mpChk[data-group="'+g+'"]').forEach(function(x){ if(x.checked) c++; }); var el=document.querySelector('.mp-gcount[data-group="'+g+'"]'); if(el) el.textContent=c; });
+}
+function syncManualUI(){ document.querySelectorAll('.mpChk').forEach(function(c){ c.checked=!!manualOwn[c.getAttribute('data-id')]; }); updateManualCounts(); syncManualAvailability(); }
+function syncManualAvailability(){
+  var dis=!!currentUser;
+  var fold=document.getElementById('poolFold'); if(fold) fold.classList.toggle('disabled', dis);
+  var note=document.getElementById('poolFoldNote'); if(note) note.hidden=!dis;
+  document.querySelectorAll('.mpChk,.mp-all,.mp-none').forEach(function(el){ el.disabled=dis; });
+  var ca=document.getElementById('poolClearAll'); if(ca) ca.disabled=dis;
+  var ps=document.getElementById('poolSearch'); if(ps) ps.disabled=dis;
+}
+function syncManualLang(){
+  document.querySelectorAll('.mp-glabel').forEach(function(el){ var g=el.closest('.pool-group').getAttribute('data-group'); el.textContent=grpLabel(g); });
+  document.querySelectorAll('.mp-all').forEach(function(b){ b.textContent=L('Select all','全选'); });
+  document.querySelectorAll('.mp-none').forEach(function(b){ b.textContent=L('Clear','清空'); });
+  document.querySelectorAll('.mpChk').forEach(function(c){ var id=Number(c.getAttribute('data-id')); var sp=c.parentElement.querySelector('.mp-name'); if(!sp) return; var all=FULL_RARE.concat(FULL_MID,FULL_COMMON); for(var i=0;i<all.length;i++){ if(all[i][2]===id){ sp.innerHTML=shipDisplayHtml({name:all[i][0], zh:SHIP_ZH[id]||null, ship_id:id}); break; } } });
+  updateManualCounts();
+}
 
 var selectedType='mega';
 var session=null;
@@ -1096,6 +1176,12 @@ function applyLang(){
   setT('convoyTitle', L('🎁 Holiday Convoy exchange (counts as owned)','🎁 节日护航队兑换（视为已拥有）'));
   setT('convoyHint', L('From Update 15.11, these three Golden ships can also be earned via the Holiday Convoy event. Tick the ones you plan to exchange for — the sim treats them as owned: they will not drop from Golden Gifts, and once all three normal Golden ships are owned, the Legacy chance rises to 10%. Changing a tick resets the session.','15.11 起这三艘金色船也可通过节日护航队活动兑换。勾选你打算换的 — 模拟时按已拥有处理：不再从金色箱掉落；三艘普通金色船全部拥有后，遗产船概率升至 10%。修改勾选会重置当前模拟。'));
   document.querySelectorAll('.convoyChk').forEach(function(c){ var sp=c.parentElement.querySelector('span'); if(sp) sp.textContent= LANG==='zh'? (GOLDEN_ZH[c.getAttribute('data-ship')]+' '+c.getAttribute('data-ship')) : c.getAttribute('data-ship'); });
+  setT('poolFoldTitle', L('🎛 Set your fleet manually (CN server / no WG account)','🎛 手动设置船池（国服 / 无国际服账号）'));
+  setT('poolFoldHint', L('Can\'t sync by logging in (e.g. CN-server players)? Tick the ships you already own here — the sim treats them as owned, so they won\'t drop. Ticks are saved on this device; when logged in, your port takes over. Changing a tick resets the session.','无法登录同步（比如国服玩家）时，在这里勾选你已经拥有的船 — 模拟时按已拥有处理，不会掉落。勾选会自动保存在本机；登录后以港口为准。修改勾选会重置当前模拟。'));
+  setT('poolFoldNote', L('Logged in · using your port','已登录 · 以港口为准'));
+  setT('poolClearAll', L('Clear all','清空全部'));
+  var pse=document.getElementById('poolSearch'); if(pse) pse.setAttribute('placeholder', L('Search ships (Chinese / English)…','搜索船名（中文 / 英文）…'));
+  if(typeof syncManualLang==='function') syncManualLang();
   var ix=document.getElementById('inOpenX'); if(ix) ix.setAttribute('aria-label', L('Batch size','数量'));
 }
 function setLang(l){
@@ -1245,6 +1331,7 @@ document.getElementById('shareOverlay').addEventListener('click', function(ev){ 
 document.getElementById('shareNative').addEventListener('click', function(){ var f=this._file; if(f&&navigator.share){ navigator.share({files:[f], title:L('Santa container results','圣诞补给箱战报')}).catch(function(){}); } });
 
 loadConvoy(); syncConvoyChecks();
+loadManual(); buildManualPoolUI(); syncManualUI();
 applyLang();
 renderLoginPanel(); renderStateChips(); resetSession();
 (function(){ var handled=parseCallback(); if(!handled){ var u=loadSavedUser(); if(u) fetchPortAndPersonalize(u); } })();
