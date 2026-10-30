@@ -198,6 +198,10 @@ li.bf-row{background:linear-gradient(90deg,rgba(255,81,47,.20),rgba(221,36,118,.
 .golden-bar{margin-top:10px;padding:9px 12px;opacity:.55}
 .golden-bar.has{opacity:1;background:#241d0d}
 .golden-bar .g-count{font-size:12.5px}
+.convoy-bar{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;margin-top:10px;background:var(--panel2);border:1px dashed #5a451d;border-radius:12px;padding:10px 12px}
+.convoy-bar .cv-title{font-weight:800;font-size:13px;color:#f3d48a;flex:1 1 100%}
+.cv-opt{display:inline-flex;gap:6px;align-items:center;font-size:13px;color:var(--muted2);cursor:pointer;font-weight:600}
+.cv-opt input{width:17px;height:17px;accent-color:var(--gold);cursor:pointer}
 .panel{margin-top:16px;background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:18px}
 .panel h2{margin:0;font-size:19px}
 .reward-grid{grid-template-columns:repeat(4,1fr);gap:7px;margin-top:10px}
@@ -252,6 +256,8 @@ details.how ul{margin:10px 0 4px;padding-left:18px;color:var(--muted);font-size:
   .golden-bar{padding:10px;gap:7px}
   .golden-bar .g-title{font-size:13px;flex:1 1 100%}
   .golden-bar .btn-gold,.golden-bar .btn-gold-sec{flex:1;padding:11px 8px}
+  .convoy-bar{gap:7px 10px;padding:9px 10px}
+  .cv-opt{font-size:12.5px}
   .panel{padding:14px 11px;border-radius:14px;margin-top:12px}
   .panel h2{font-size:16.5px}
   .remaining{gap:6px}
@@ -341,6 +347,13 @@ details.how ul{margin:10px 0 4px;padding-left:18px;color:var(--muted);font-size:
       <button class="btn-gold" id="btnBF" disabled>打开</button>
       <button class="btn-gold-sec" id="btnBFAll" disabled>全部打开</button>
     </div>
+    <div class="convoy-bar" id="convoyBar">
+      <span class="cv-title" id="convoyTitle">🎁 节日护航队兑换（视为已拥有）</span>
+      <label class="cv-opt"><input type="checkbox" class="convoyChk" data-ship="Rodina"> <span>祖国 Rodina</span></label>
+      <label class="cv-opt"><input type="checkbox" class="convoyChk" data-ship="Latouche-Tréville"> <span>拉图什·特雷维尔 Latouche-Tréville</span></label>
+      <label class="cv-opt"><input type="checkbox" class="convoyChk" data-ship="Tōgasa"> <span>托加萨 Tōgasa</span></label>
+    </div>
+    <p class="hint" id="convoyHint" style="margin:8px 0 0">15.11 起这三艘金色船也可通过节日护航队活动兑换。勾选你打算换的 — 模拟时按已拥有处理：不再从金色箱掉落；三艘普通金色船全部拥有后，遗产船概率升至 10%。修改勾选会重置当前模拟。</p>
   </section>
 
   <section class="panel">
@@ -751,13 +764,22 @@ function shipFromGroup(type, group){
 }
 
 /* ---------- ROLL-BY-ROLL SESSION ---------- */
+/* ---------- HOLIDAY CONVOY PRE-OWN (Golden normals via event) ---------- */
+var CONVOY_KEY='wows-santa-convoy-v1';
+var convoyOwn={};
+function loadConvoy(){ try{ var j=JSON.parse(localStorage.getItem(CONVOY_KEY)||'{}'); GOLDEN_NORMAL.forEach(function(n){ if(j[n]) convoyOwn[n]=true; }); }catch(e){} }
+function saveConvoy(){ try{ localStorage.setItem(CONVOY_KEY, JSON.stringify(convoyOwn)); }catch(e){} }
+function goldenPreOwnCount(){ return GOLDEN_NORMAL.filter(function(n){ return !!convoyOwn[n]; }).length; }
+function preOwnedGoldenShips(){ return GOLDEN_NORMAL.filter(function(n){ return !!convoyOwn[n]; }).map(function(n){ return {name:n, zh:GOLDEN_ZH[n]||null, tier:0, group:'golden', pre:true}; }); }
+function syncConvoyChecks(){ document.querySelectorAll('.convoyChk').forEach(function(c){ c.checked=!!convoyOwn[c.getAttribute('data-ship')]; }); }
+
 var selectedType='mega';
 var session=null;
 function resetSession(){
   var pools=buildPools();
   session={pools:pools, initial:{rare:pools.rare.length,mid:pools.mid.length,common:pools.common.length}, log:[], acquired:[], counters:{gift:0,mega:0,ultra:0}, openedByType:{gift:0,mega:0,ultra:0}, total:0, logSeq:0,
     rewards:emptyRewards(), goldenInventory:0, goldenOpened:0, goldenShipLess:0,
-    goldenNormal:GOLDEN_NORMAL.slice(), goldenLegacy:GOLDEN_LEGACY.slice(),
+    goldenNormal:GOLDEN_NORMAL.filter(function(n){ return !convoyOwn[n]; }), goldenLegacy:GOLDEN_LEGACY.slice(),
     bfInventory:0, bfOpened:0, bfNoNj:0, bfNjOwned:false, celebrated:0};
   renderSession();
 }
@@ -971,9 +993,9 @@ function renderSession(pop){
   var rc=session.acquired.filter(function(s){return s.group==='rare'}).length;
   var mc=session.acquired.filter(function(s){return s.group==='mid'}).length;
   var cc=session.acquired.filter(function(s){return s.group==='common'}).length;
-  var gc2=session.acquired.filter(function(s){return s.group==='golden'||s.group==='legacy'}).length;
+  var gc2=session.acquired.filter(function(s){return s.group==='golden'||s.group==='legacy'}).length+goldenPreOwnCount();
   var bfc=session.acquired.filter(function(s){return s.group==='bf'}).length;
-  document.getElementById('acqTitle').textContent=L('Your ships — ','你的舰船 — ')+session.acquired.length+(session.acquired.length?'  ·  '+rc+' '+grpLabel('rare')+' · '+mc+' '+grpLabel('mid')+' · '+cc+' '+grpLabel('common')+(gc2?' · '+gc2+' '+L('Golden','金色'):'')+(bfc?' · '+bfc+' '+grpLabel('bf'):''):'');
+  document.getElementById('acqTitle').textContent=L('Your ships — ','你的舰船 — ')+(session.acquired.length+goldenPreOwnCount())+(session.acquired.length?'  ·  '+rc+' '+grpLabel('rare')+' · '+mc+' '+grpLabel('mid')+' · '+cc+' '+grpLabel('common')+(gc2?' · '+gc2+' '+L('Golden','金色'):'')+(bfc?' · '+bfc+' '+grpLabel('bf'):''):'');
   var last=session.log[0];
   var lr=document.getElementById('lastRoll');
   if(!last) lr.textContent=L('No rolls yet.','暂无记录。');
@@ -991,13 +1013,14 @@ function renderSession(pop){
   }
   // acquired panel grouped
   var panel=document.getElementById('acquiredPanel');
-  if(!session.acquired.length){ panel.innerHTML='<p class="empty">'+L('No ships yet — open a container.','还没有舰船 — 打开一个补给箱吧。')+'</p>'; }
+  if(!session.acquired.length && !goldenPreOwnCount()){ panel.innerHTML='<p class="empty">'+L('No ships yet — open a container.','还没有舰船 — 打开一个补给箱吧。')+'</p>'; }
   else{
     var html='';
     [['rare',grpLabel('rare')],['mid',grpLabel('mid')],['common',grpLabel('common')],['golden',grpLabel('golden')],['legacy',grpLabel('legacy')],['bf',grpLabel('bf')]].forEach(function(gd){
       var ships=session.acquired.filter(function(s){return s.group===gd[0]});
+      if(gd[0]==='golden') ships=preOwnedGoldenShips().concat(ships);
       if(!ships.length) return;
-      html+='<div class="acq-group"><h4>'+gd[1]+' — '+ships.length+'</h4><div class="acq-chips">'+ships.map(function(s){return '<span class="acq-chip'+(s.group==='bf'?' bf-chip':'')+'">'+(s.group==='bf'?'🔥 ':'')+shipDisplayHtml(s)+(s.tier?' · '+roman(s.tier):'')+'</span>'}).join('')+'</div></div>';
+      html+='<div class="acq-group"><h4>'+gd[1]+' — '+ships.length+'</h4><div class="acq-chips">'+ships.map(function(s){return '<span class="acq-chip'+(s.group==='bf'?' bf-chip':'')+'">'+(s.group==='bf'?'🔥 ':'')+shipDisplayHtml(s)+(s.tier?' · '+roman(s.tier):'')+(s.pre?' <span class="tag">'+L('Convoy','活动兑换')+'</span>':'')+'</span>'}).join('')+'</div></div>';
     });
     panel.innerHTML=html;
   }
@@ -1067,6 +1090,9 @@ function applyLang(){
   var howEn=['Won ships leave the pool — no duplicates.','If a group runs out, its chance moves to the other groups; the total ship % never changes. Once you own every ship, ship drops pay Steel instead: Gift 250 · Mega/Ultra 1,250.','Pity is assumed from last year: Gift 100 · Mega 15 · Ultra 7 · Golden 10 ship-less in a row.','Golden Gifts drop from Santa containers and open separately.','Prices are last year\'s — 15.11 prices aren\'t published yet.','Login fetches your port via Wargaming and matches ships by exact ID; variants count separately. Golden ships aren\'t filtered by login.','Rates from the Closed Test 15.11 blog — may change before live.','Own all 7 Golden ships and Golden ship drops become Battle Forged Premium containers instead: 50% New Jersey BF, guaranteed on the 3rd; if you already own her, 2,500 Steel instead.'];
   var howZh=['已获得的舰船会离开船池 — 不会重复掉落。','某组舰船抽完后，其概率会转移到其他组；总出船概率不变。全部船抽齐后，出船改为钢铁补偿：礼物 250 · 超级/特级 1,250。','保底按去年规则假设：礼物 100 · 超级 15 · 特级 7 · 金色 10 次无船触发。','金色礼物补给箱从圣诞补给箱中掉落，单独开启。','价格为去年价格 — 15.11 价格尚未公布。','登录后通过 Wargaming 获取你的港口，按确切 ID 匹配舰船；不同版本分别计算。金色舰船不按登录过滤。','概率来自封闭测试 15.11 博客 — 正式上线前可能调整。','集齐金色礼物全部 7 艘船后，金色箱的出船奖励改为战火锻造高级补给箱；锻造箱 50% 出新泽西 BF，第 3 个保底必出，已有时改为 2,500 钢铁。'];
   for(var i=0;i<8;i++) setT('how'+(i+1), LANG==='zh'? howZh[i] : howEn[i]);
+  setT('convoyTitle', L('🎁 Holiday Convoy exchange (counts as owned)','🎁 节日护航队兑换（视为已拥有）'));
+  setT('convoyHint', L('From Update 15.11, these three Golden ships can also be earned via the Holiday Convoy event. Tick the ones you plan to exchange for — the sim treats them as owned: they will not drop from Golden Gifts, and once all three normal Golden ships are owned, the Legacy chance rises to 10%. Changing a tick resets the session.','15.11 起这三艘金色船也可通过节日护航队活动兑换。勾选你打算换的 — 模拟时按已拥有处理：不再从金色箱掉落；三艘普通金色船全部拥有后，遗产船概率升至 10%。修改勾选会重置当前模拟。'));
+  document.querySelectorAll('.convoyChk').forEach(function(c){ var sp=c.parentElement.querySelector('span'); if(sp) sp.textContent= LANG==='zh'? (GOLDEN_ZH[c.getAttribute('data-ship')]+' '+c.getAttribute('data-ship')) : c.getAttribute('data-ship'); });
   var ix=document.getElementById('inOpenX'); if(ix) ix.setAttribute('aria-label', L('Batch size','数量'));
 }
 function setLang(l){
@@ -1085,6 +1111,7 @@ document.querySelectorAll('.type-btn').forEach(function(b){
 document.getElementById('btnRoll').addEventListener('click',function(){ rollBatch(openCount()); });
 document.getElementById('btnRoll10').addEventListener('click',function(){ rollBatch(10); });
 document.getElementById('btnReset').addEventListener('click',function(){ resetSession(); });
+document.querySelectorAll('.convoyChk').forEach(function(c){ c.addEventListener('change',function(){ var n=c.getAttribute('data-ship'); if(c.checked) convoyOwn[n]=true; else delete convoyOwn[n]; saveConvoy(); resetSession(); }); });
 document.getElementById('btnGolden').addEventListener('click',function(){ rollGoldenOne(); renderSession(true); });
 document.getElementById('btnGoldenAll').addEventListener('click',function(){ rollGoldenBatch(); });
 document.getElementById('btnBF').addEventListener('click',function(){ rollBFOne(); renderSession(true); });
@@ -1140,7 +1167,7 @@ function buildShareCard(){
     [L('Opened','已打开'), fmtNum(totalOpened)+L(' total',' 个')+' — '+L('Gift','礼物')+' '+(ob.gift||0)+' · '+L('Mega','超级')+' '+(ob.mega||0)+' · '+L('Ultra','特级')+' '+(ob.ultra||0)+' · '+L('Golden','金色')+' '+session.goldenOpened+' · '+L('BF','锻造')+' '+session.bfOpened],
     [L('Spent','花费'), costStr],
     [L('Ships','出船'), fmtNum(ships.length)+L(' ships',' 艘')+' — '+L('Rare','稀有')+' '+cnt('rare')+' · '+L('Mid','中级')+' '+cnt('mid')+' · '+L('Common','普通')+' '+cnt('common')+' · '+L('Golden','金色')+' '+gc+(cnt('bf')?' · BF ★':'')],
-    [L('Collection','收藏'), (function(){ var ini=session.initial||{rare:42,mid:53,common:48}; var santaWon=cnt('rare')+cnt('mid')+cnt('common'); var ownedNow=143-(ini.rare+ini.mid+ini.common)+santaWon; var s=L('Santa pool ','圣诞池已集 ')+ownedNow+'/143'+(santaWon? L(' (+','（本次 +')+santaWon+(LANG==='zh'?'）':' this run)') : ''); s+=' · '+L('Golden ships ','金色船 ')+gc+'/7'; if(typeof portIdSet!=='undefined'&&portIdSet) s+=' · '+L('Port: ','港口总舰船 ')+fmtNum(Object.keys(portIdSet).length)+L(' ships',' 艘'); return s; })()],
+    [L('Collection','收藏'), (function(){ var ini=session.initial||{rare:42,mid:53,common:48}; var santaWon=cnt('rare')+cnt('mid')+cnt('common'); var ownedNow=143-(ini.rare+ini.mid+ini.common)+santaWon; var s=L('Santa pool ','圣诞池已集 ')+ownedNow+'/143'+(santaWon? L(' (+','（本次 +')+santaWon+(LANG==='zh'?'）':' this run)') : ''); s+=' · '+L('Golden ships ','金色船 ')+(gc+goldenPreOwnCount())+'/7'; if(typeof portIdSet!=='undefined'&&portIdSet) s+=' · '+L('Port: ','港口总舰船 ')+fmtNum(Object.keys(portIdSet).length)+L(' ships',' 艘'); return s; })()],
     [L('Loot','资源'), L('Steel ','钢铁 ')+fmtNum(r.steel)+' · '+L('Coal ','煤炭 ')+fmtNum(r.coal)],
     [L('More','其他'), L('Doubloons back ','赢回达布隆 ')+fmtNum(r.doubloons)+' · '+L('RP ','研发点 ')+fmtNum(r.rp)+' · '+L('Premium ','高级账号 ')+fmtNum(r.premium)+L(' days',' 天')]
   ];
@@ -1214,6 +1241,7 @@ document.getElementById('shareClose').addEventListener('click', function(){ docu
 document.getElementById('shareOverlay').addEventListener('click', function(ev){ if(ev.target===this) this.hidden=true; });
 document.getElementById('shareNative').addEventListener('click', function(){ var f=this._file; if(f&&navigator.share){ navigator.share({files:[f], title:L('Santa container results','圣诞补给箱战报')}).catch(function(){}); } });
 
+loadConvoy(); syncConvoyChecks();
 applyLang();
 renderLoginPanel(); renderStateChips(); resetSession();
 (function(){ var handled=parseCallback(); if(!handled){ var u=loadSavedUser(); if(u) fetchPortAndPersonalize(u); } })();
