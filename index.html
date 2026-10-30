@@ -1104,6 +1104,7 @@ var SITE_URL='https://zhouxf53.github.io/wows-santa-simulator/';
 var shareBlob=null;
 function grpColor(g){ return g==='rare'?'#e8b34d':g==='mid'?'#6fc3df':(g==='golden'||g==='legacy')?'#ffd76a':g==='bf'?'#ff6a3d':'#a8b6c2'; }
 function fitText(ctx, text, maxW){ if(ctx.measureText(text).width<=maxW) return text; var t=text; while(t.length>1 && ctx.measureText(t+'…').width>maxW) t=t.slice(0,-1); return t+'…'; }
+function rrPath(ctx,x,y,w,h,r){ ctx.beginPath(); ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r); ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath(); }
 function buildShareCard(){
   var W=1080, M=64;
   var ships=session.acquired.slice();
@@ -1111,7 +1112,7 @@ function buildShareCard(){
   var rows=Math.max(1, Math.ceil(shown.length/2));
   var hasBF=ships.some(function(s){return s.group==='bf'});
   var statsTop=262, rowH=58;
-  var statsEnd=statsTop+4*rowH;
+  var statsEnd=statsTop+5*rowH;
   var bfH=hasBF? 106:0;
   var listHeadY=statsEnd+bfH+44;
   var listTop=listHeadY+54;
@@ -1126,8 +1127,7 @@ function buildShareCard(){
   ctx.fillStyle='#e8eef3'; ctx.font='900 54px system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif';
   ctx.fillText(L("Santa's Gift — Results","圣诞补给箱 · 开箱战报"), M, 118);
   ctx.fillStyle='#9db0c2'; ctx.font='27px system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif';
-  var who=(typeof currentUser!=='undefined'&&currentUser&&currentUser.nickname)? currentUser.nickname+' · '+realmLabel(currentUser.realm)+' · ' : '';
-  ctx.fillText(who+new Date().toLocaleDateString(LANG==='zh'?'zh-CN':'en-US'), M, 168);
+  ctx.fillText(new Date().toLocaleDateString(LANG==='zh'?'zh-CN':'en-US')+L(' · Santa containers (closed-test data)',' · 圣诞补给箱（内测数据）'), M, 168);
   ctx.strokeStyle='#233243'; ctx.lineWidth=2; ctx.beginPath(); ctx.moveTo(M,206); ctx.lineTo(W-M,206); ctx.stroke();
   var ob=session.openedByType, r=session.rewards;
   var totalOpened=(ob.gift||0)+(ob.mega||0)+(ob.ultra||0)+session.goldenOpened+session.bfOpened;
@@ -1140,12 +1140,25 @@ function buildShareCard(){
     [L('Opened','已打开'), fmtNum(totalOpened)+L(' total',' 个')+' — '+L('Gift','礼物')+' '+(ob.gift||0)+' · '+L('Mega','超级')+' '+(ob.mega||0)+' · '+L('Ultra','特级')+' '+(ob.ultra||0)+' · '+L('Golden','金色')+' '+session.goldenOpened+' · '+L('BF','锻造')+' '+session.bfOpened],
     [L('Spent','花费'), costStr],
     [L('Ships','出船'), fmtNum(ships.length)+L(' ships',' 艘')+' — '+L('Rare','稀有')+' '+cnt('rare')+' · '+L('Mid','中级')+' '+cnt('mid')+' · '+L('Common','普通')+' '+cnt('common')+' · '+L('Golden','金色')+' '+gc+(cnt('bf')?' · BF ★':'')],
+    [L('Collection','收藏'), (function(){ var ini=session.initial||{rare:42,mid:53,common:48}; var santaWon=cnt('rare')+cnt('mid')+cnt('common'); var ownedNow=143-(ini.rare+ini.mid+ini.common)+santaWon; var s=L('Santa pool ','圣诞池已集 ')+ownedNow+'/143'+(santaWon? L(' (+','（本次 +')+santaWon+(LANG==='zh'?'）':' this run)') : ''); if(typeof portIdSet!=='undefined'&&portIdSet) s+=' · '+L('Port: ','港口总舰船 ')+fmtNum(Object.keys(portIdSet).length)+L(' ships',' 艘'); return s; })()],
     [L('Loot','资源'), L('Steel ','钢铁 ')+fmtNum(r.steel)+' · '+L('Coal ','煤炭 ')+fmtNum(r.coal)+' · '+L('Doubloons back ','赢回达布隆 ')+fmtNum(r.doubloons)+' · '+L('RP ','研发点 ')+fmtNum(r.rp)]
   ];
   statRows.forEach(function(row,i){ var y=statsTop+i*rowH;
     ctx.fillStyle='#9db0c2'; ctx.font='600 27px system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif'; ctx.fillText(row[0], M, y);
     ctx.fillStyle='#ffffff'; ctx.font='700 30px system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif'; ctx.fillText(fitText(ctx,row[1],W-M-190), M+170, y);
   });
+  var santaOpened=(ob.gift||0)+(ob.mega||0)+(ob.ultra||0);
+  if(santaOpened>=5){
+    var expShips=(ob.gift||0)*0.025+(ob.mega||0)*0.16+(ob.ultra||0)*0.32;
+    var santaWon2=cnt('rare')+cnt('mid')+cnt('common');
+    var ratio=expShips>0? santaWon2/expShips : 0;
+    var luckTitle= ratio>=2? L('BLESSED','天选欧皇') : ratio>=1.4? L('Very lucky','欧皇附体') : ratio>=0.9? L('Average luck','正常发挥') : ratio>=0.55? L('A bit unlucky','略显非气') : L('Certified unlucky','非洲酋长');
+    var badge=L('Luck ','欧皇指数 ')+'×'+ratio.toFixed(2)+' · '+luckTitle;
+    ctx.font='800 28px system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif';
+    var bw=ctx.measureText(badge).width+40, bx=W-M-bw, byy=116, bh=56;
+    rrPath(ctx,bx,byy,bw,bh,14); ctx.fillStyle='rgba(30,26,15,.94)'; ctx.fill(); ctx.strokeStyle='#e8b34d'; ctx.lineWidth=2; ctx.stroke();
+    ctx.fillStyle='#f3d48a'; ctx.textAlign='center'; ctx.fillText(badge, bx+bw/2, byy+37); ctx.textAlign='left';
+  }
   if(hasBF){
     var by=statsEnd+16, grad=ctx.createLinearGradient(M,0,W-M,0);
     grad.addColorStop(0,'rgba(255,81,47,.32)'); grad.addColorStop(1,'rgba(221,36,118,.32)');
