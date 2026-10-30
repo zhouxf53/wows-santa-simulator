@@ -436,7 +436,7 @@ details.how ul{margin:10px 0 4px;padding-left:18px;color:var(--muted);font-size:
       <li id="how5">价格为去年价格 — 15.11 价格尚未公布。</li>
       <li id="how6">登录后通过 Wargaming 获取你的港口，按确切 ID 匹配舰船；不同版本分别计算。金色舰船不按登录过滤。</li>
       <li id="how7">概率来自封闭测试 15.11 博客 — 正式上线前可能调整。</li>
-      <li id="how8">集齐金色礼物全部 7 艘船后，金色箱的出船奖励改为战火锻造高级补给箱；锻造箱 50% 出新泽西 BF，第 3 个保底必出，已有时改为 2,500 钢铁。</li>
+      <li id="how8">集齐金色礼物全部 7 艘船后，金色箱的出船奖励改为战火锻造高级补给箱（每个金色箱 10%；此时金色保底改为第 10 个金色箱必出锻造箱）；锻造箱 50% 出新泽西 BF，第 3 个保底必出，已有时改为 2,500 钢铁。</li>
     </ul>
   </details>
 </div>
@@ -909,14 +909,18 @@ function rollGoldenOne(){
   session.goldenInventory--; session.goldenOpened++;
   var hasShips=session.goldenNormal.length>0 || session.goldenLegacy.length>0;
   var forced=pityOn && hasShips && (session.goldenShipLess+1>=GOLDEN_TYPE.pity);
+  // WG CS-confirmed (Oct 2026): once all golden ships are owned, the same 10-pity guarantees a Battle Forged container on the 10th Golden Gift.
+  var forcedBF=pityOn && !hasShips && (session.goldenShipLess+1>=GOLDEN_TYPE.pity);
   var outcome;
   if(forced){
     var s=pickGoldenShip();
     outcome=s? {ship:s} : rollTable(goldenTable());
+  } else if(forcedBF){
+    outcome=bfDropOutcome();
   } else {
     outcome=rollTable(goldenTable());
   }
-  var entry={n:++session.logSeq, type:GOLDEN_TYPE, ship:outcome.ship||null, forced:forced && !!outcome.ship, headline:outcome.text||'', goldenWin:false, bfWin:!!outcome.bf, extras:[], golden:true};
+  var entry={n:++session.logSeq, type:GOLDEN_TYPE, ship:outcome.ship||null, forced:(forced && !!outcome.ship) || (forcedBF && !!outcome.bf), headline:outcome.text||'', goldenWin:false, bfWin:!!outcome.bf, extras:[], golden:true};
   if(entry.ship){ session.acquired.push(entry.ship); session.goldenShipLess=0; }
   else if(outcome.bf){ session.goldenShipLess=0; }
   else { session.goldenShipLess++; }
@@ -1007,7 +1011,7 @@ function renderSession(pop){
   document.getElementById('pityGift').textContent=pillText(session.counters.gift,100);
   document.getElementById('pityMega').textContent=pillText(session.counters.mega,15);
   document.getElementById('pityUltra').textContent=pillText(session.counters.ultra,7);
-  var pg=document.getElementById('pityGolden'); if(pg) pg.textContent= (!session.goldenNormal.length && !session.goldenLegacy.length)? L('Complete · BF 10%','已集齐 · 锻造 10%') : (pityOnNow? session.goldenShipLess+' / 10' : String(session.goldenShipLess));
+  var pg=document.getElementById('pityGolden'); if(pg) pg.textContent= pityOnNow? session.goldenShipLess+' / 10' : String(session.goldenShipLess);
   document.getElementById('sessOpened').textContent=session.total;
   (function(){
     var ob=session.openedByType||{gift:0,mega:0,ultra:0};
@@ -1181,8 +1185,8 @@ function applyLang(){
   setT('shareTip', L('On mobile you can also long-press the image to save or forward it.','手机上也可以长按图片保存或转发。'));
   setT('rollsTitle', L('Rolls','开箱记录'));
   setT('howSummary', L('How it works','玩法说明'));
-  var howEn=['Won ships leave the pool — no duplicates.','If a group runs out, its chance moves to the other groups; the total ship % never changes. Once you own every ship, ship drops pay Steel instead: Gift 250 · Mega/Ultra 1,250.','Pity is assumed from last year: Gift 100 · Mega 15 · Ultra 7 · Golden 10 ship-less in a row.','Golden Gifts drop from Santa containers and open separately.','Prices are last year\'s, including shop bundles (8-pack −15%, 20-pack −25%; Ultra 8 for $67.98, 20 for $149) — 15.11 prices aren\'t published yet.','Login fetches your port via Wargaming and matches ships by exact ID; variants count separately. Golden ships aren\'t filtered by login.','Rates from the Closed Test 15.11 blog — may change before live.','Own all 7 Golden ships and Golden ship drops become Battle Forged Premium containers instead: 50% New Jersey BF, guaranteed on the 3rd; if you already own her, 2,500 Steel instead.'];
-  var howZh=['已获得的舰船会离开船池 — 不会重复掉落。','某组舰船抽完后，其概率会转移到其他组；总出船概率不变。全部船抽齐后，出船改为钢铁补偿：礼物 250 · 超级/特级 1,250。','保底按去年规则假设：礼物 100 · 超级 15 · 特级 7 · 金色 10 次无船触发。','金色礼物补给箱从圣诞补给箱中掉落，单独开启。','价格为去年价格，含商店捆绑包（8 个 −15%、20 个 −25%；特级 8 个 $67.98、20 个 $149）— 15.11 价格尚未公布。','登录后通过 Wargaming 获取你的港口，按确切 ID 匹配舰船；不同版本分别计算。金色舰船不按登录过滤。','概率来自封闭测试 15.11 博客 — 正式上线前可能调整。','集齐金色礼物全部 7 艘船后，金色箱的出船奖励改为战火锻造高级补给箱；锻造箱 50% 出新泽西 BF，第 3 个保底必出，已有时改为 2,500 钢铁。'];
+  var howEn=['Won ships leave the pool — no duplicates.','If a group runs out, its chance moves to the other groups; the total ship % never changes. Once you own every ship, ship drops pay Steel instead: Gift 250 · Mega/Ultra 1,250.','Pity is assumed from last year: Gift 100 · Mega 15 · Ultra 7 · Golden 10 ship-less in a row.','Golden Gifts drop from Santa containers and open separately.','Prices are last year\'s, including shop bundles (8-pack −15%, 20-pack −25%; Ultra 8 for $67.98, 20 for $149) — 15.11 prices aren\'t published yet.','Login fetches your port via Wargaming and matches ships by exact ID; variants count separately. Golden ships aren\'t filtered by login.','Rates from the Closed Test 15.11 blog — may change before live.','Own all 7 Golden ships and Golden ship drops become Battle Forged Premium containers instead (10% per Golden Gift; the Golden pity then guarantees one on the 10th). Battle Forged: 50% New Jersey BF, guaranteed on the 3rd; if you already own her, 2,500 Steel instead.'];
+  var howZh=['已获得的舰船会离开船池 — 不会重复掉落。','某组舰船抽完后，其概率会转移到其他组；总出船概率不变。全部船抽齐后，出船改为钢铁补偿：礼物 250 · 超级/特级 1,250。','保底按去年规则假设：礼物 100 · 超级 15 · 特级 7 · 金色 10 次无船触发。','金色礼物补给箱从圣诞补给箱中掉落，单独开启。','价格为去年价格，含商店捆绑包（8 个 −15%、20 个 −25%；特级 8 个 $67.98、20 个 $149）— 15.11 价格尚未公布。','登录后通过 Wargaming 获取你的港口，按确切 ID 匹配舰船；不同版本分别计算。金色舰船不按登录过滤。','概率来自封闭测试 15.11 博客 — 正式上线前可能调整。','集齐金色礼物全部 7 艘船后，金色箱的出船奖励改为战火锻造高级补给箱（每个金色箱 10%；此时金色保底改为第 10 个金色箱必出锻造箱）；锻造箱 50% 出新泽西 BF，第 3 个保底必出，已有时改为 2,500 钢铁。'];
   for(var i=0;i<8;i++) setT('how'+(i+1), LANG==='zh'? howZh[i] : howEn[i]);
   setT('convoyTitle', L('🎁 Holiday Convoy exchange (counts as owned)','🎁 节日护航队兑换（视为已拥有）'));
   setT('convoyHint', L('From Update 15.11, these three Golden ships can also be earned via the Holiday Convoy event. Tick the ones you plan to exchange for — the sim treats them as owned: they will not drop from Golden Gifts, and once all three normal Golden ships are owned, the Legacy chance rises to 10%. Changing a tick resets the session.','15.11 起这三艘金色船也可通过节日护航队活动兑换。勾选你打算换的 — 模拟时按已拥有处理：不再从金色箱掉落；三艘普通金色船全部拥有后，遗产船概率升至 10%。修改勾选会重置当前模拟。'));
