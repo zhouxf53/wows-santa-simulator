@@ -925,13 +925,13 @@ function rollBFOne(){
   var b3=pickBonus(); session.rewards.legendary+=3;
   var ship=null, head='';
   if(forced){
-    ship={name:'New Jersey BF', zh:'新泽西 BF', tier:9, group:'bf'};
+    ship={name:'New Jersey BF', zh:'新泽西 BF', tier:10, group:'bf'};
   } else {
     var r=Math.random();
     if(r<0.25){ session.rewards.rp+=10000; head=TX('10,000 Research Points','10,000 研发点'); }
     else if(r<0.50){ session.rewards.steel+=5000; head=TX('5,000 Steel','5,000 钢铁'); }
     else if(njOwned){ session.rewards.steel+=2500; head=TX('2,500 Steel','2,500 钢铁'); }
-    else { ship={name:'New Jersey BF', zh:'新泽西 BF', tier:9, group:'bf'}; }
+    else { ship={name:'New Jersey BF', zh:'新泽西 BF', tier:10, group:'bf'}; }
   }
   var entry={n:++session.logSeq, type:BF_TYPE, ship:ship, forced:forced && !!ship, headline:head, goldenWin:false, extras:[TX('Slot 1: 3× Legendary bonus ('+b1.en+')','槽位 1：3× 传奇经济加成（'+b1.zh+'）'), TX('Slot 3: 3× Legendary bonus ('+b3.en+')','槽位 3：3× 传奇经济加成（'+b3.zh+'）')], bfRoll:true};
   if(ship){ session.acquired.push(ship); session.bfNjOwned=true; session.bfNoNj=0; }
