@@ -634,14 +634,21 @@ function fetchPortAndPersonalize(user){
     });
 }
 var TYPES=[
- {key:'gift', label:"Santa's Gift", short:'Gift', labelZh:'圣诞礼物补给箱', shortZh:'礼物', p:{rare:0.001,mid:0.004,common:0.02}, pity:100, doubloons:250, dollars:1, steelComp:250},
- {key:'mega', label:"Santa's Mega Gift", short:'Mega', labelZh:'圣诞超级礼物补给箱', shortZh:'超级', p:{rare:0.01,mid:0.03,common:0.12}, pity:15, doubloons:1250, dollars:5, steelComp:1250},
- {key:'ultra',label:"Santa's Ultra Gift", short:'Ultra', labelZh:'圣诞特级礼物补给箱', shortZh:'特级', p:{rare:0.03,mid:0.09,common:0.20}, pity:7, doubloons:0, dollars:10, steelComp:1250}
+ {key:'gift', label:"Santa's Gift", short:'Gift', labelZh:'圣诞礼物补给箱', shortZh:'礼物', p:{rare:0.001,mid:0.004,common:0.02}, pity:100, doubloons:250, dollars:1, steelComp:250, packDbl:[250,1700,3750]},
+ {key:'mega', label:"Santa's Mega Gift", short:'Mega', labelZh:'圣诞超级礼物补给箱', shortZh:'超级', p:{rare:0.01,mid:0.03,common:0.12}, pity:15, doubloons:1250, dollars:5, steelComp:1250, packDbl:[1250,8500,18750]},
+ {key:'ultra',label:"Santa's Ultra Gift", short:'Ultra', labelZh:'圣诞特级礼物补给箱', shortZh:'特级', p:{rare:0.03,mid:0.09,common:0.20}, pity:7, doubloons:0, dollars:10, steelComp:1250, packUsd:[10,67.98,149]}
 ];
+// Cheapest way to buy n containers using the shop's 1 / 8 / 20 packs (last year's bundles: 8-pack −15%, 20-pack −25%; Ultra packs are $67.98 / $149).
+function packCost(packs, n){
+  var best=Infinity;
+  for(var a=0;a*20<=n;a++){ for(var b=0;(a*20+b*8)<=n;b++){ var c=a*packs[2]+b*packs[1]+(n-a*20-b*8)*packs[0]; if(c<best) best=c; } }
+  return best;
+}
+function fmtMoney(x){ var v=Math.round(x*100)/100; return v.toLocaleString('en-US',{maximumFractionDigits:2}); }
 function typeByKey(k){ for(var i=0;i<TYPES.length;i++) if(TYPES[i].key===k) return TYPES[i]; return TYPES[1]; }
 function costTextFor(n, type){
-  if(type.key==='ultra') return n+' × '+typeShort(type)+' = $'+fmtNum(n*10)+L(' (cash only)','（仅现金）');
-  var d=n*type.doubloons; return n+' × '+typeShort(type)+' = '+fmtNum(d)+L(' doubloons',' 达布隆')+' ≈ $'+fmtNum(d/250);
+  if(type.key==='ultra') return n+' × '+typeShort(type)+' = $'+fmtMoney(packCost(type.packUsd, n))+L(' (cash only)','（仅现金）');
+  var d=packCost(type.packDbl, n); return n+' × '+typeShort(type)+' = '+fmtNum(d)+L(' doubloons',' 达布隆')+' ≈ $'+fmtMoney(d/250);
 }
 function openCount(){ var el=document.getElementById('inOpenX'); return Math.max(1,Math.min(9999,parseInt(el&&el.value)||20)); }
 function updateBatchCost(){
@@ -1004,18 +1011,18 @@ function renderSession(pop){
   document.getElementById('sessOpened').textContent=session.total;
   (function(){
     var ob=session.openedByType||{gift:0,mega:0,ultra:0};
-    var doub=(ob.gift||0)*250+(ob.mega||0)*1250;
-    var ultraDollars=(ob.ultra||0)*10;
+    var doub=packCost(typeByKey('gift').packDbl, ob.gift||0)+packCost(typeByKey('mega').packDbl, ob.mega||0);
+    var ultraDollars=packCost(typeByKey('ultra').packUsd, ob.ultra||0);
     var won=session.rewards? session.rewards.doubloons : 0;
     var net=doub-won;
     var combinedNet=net/250+ultraDollars;
     var cd=document.getElementById('costDoubloons'); if(cd) cd.textContent=fmtNum(doub)+L(' doubloons',' 达布隆');
-    var cdd=document.getElementById('costDoubloonDollars'); if(cdd) cdd.textContent='(≈ $'+fmtNum(doub/250)+')';
+    var cdd=document.getElementById('costDoubloonDollars'); if(cdd) cdd.textContent='(≈ $'+fmtMoney(doub/250)+')';
     var cw=document.getElementById('costWonBack'); if(cw) cw.textContent=fmtNum(won)+L(' doubloons',' 达布隆');
     var cn=document.getElementById('costNet'); if(cn) cn.textContent=fmtNum(net)+L(' doubloons',' 达布隆');
-    var cnd=document.getElementById('costNetDollars'); if(cnd) cnd.textContent='(≈ $'+fmtNum(net/250)+')';
-    var cu=document.getElementById('costUltraDollars'); if(cu) cu.textContent='$'+fmtNum(ultraDollars);
-    var cc2=document.getElementById('costCombined'); if(cc2) cc2.textContent='≈ $'+fmtNum(combinedNet);
+    var cnd=document.getElementById('costNetDollars'); if(cnd) cnd.textContent='(≈ $'+fmtMoney(net/250)+')';
+    var cu=document.getElementById('costUltraDollars'); if(cu) cu.textContent='$'+fmtMoney(ultraDollars);
+    var cc2=document.getElementById('costCombined'); if(cc2) cc2.textContent='≈ $'+fmtMoney(combinedNet);
     var cb=document.getElementById('costBreakdown'); if(cb) cb.textContent=typeShort(typeByKey('gift'))+' ×'+(ob.gift||0)+' · '+typeShort(typeByKey('mega'))+' ×'+(ob.mega||0)+' · '+typeShort(typeByKey('ultra'))+' ×'+(ob.ultra||0);
     if(typeof updateBatchCost==='function') updateBatchCost();
   })();
@@ -1174,8 +1181,8 @@ function applyLang(){
   setT('shareTip', L('On mobile you can also long-press the image to save or forward it.','手机上也可以长按图片保存或转发。'));
   setT('rollsTitle', L('Rolls','开箱记录'));
   setT('howSummary', L('How it works','玩法说明'));
-  var howEn=['Won ships leave the pool — no duplicates.','If a group runs out, its chance moves to the other groups; the total ship % never changes. Once you own every ship, ship drops pay Steel instead: Gift 250 · Mega/Ultra 1,250.','Pity is assumed from last year: Gift 100 · Mega 15 · Ultra 7 · Golden 10 ship-less in a row.','Golden Gifts drop from Santa containers and open separately.','Prices are last year\'s — 15.11 prices aren\'t published yet.','Login fetches your port via Wargaming and matches ships by exact ID; variants count separately. Golden ships aren\'t filtered by login.','Rates from the Closed Test 15.11 blog — may change before live.','Own all 7 Golden ships and Golden ship drops become Battle Forged Premium containers instead: 50% New Jersey BF, guaranteed on the 3rd; if you already own her, 2,500 Steel instead.'];
-  var howZh=['已获得的舰船会离开船池 — 不会重复掉落。','某组舰船抽完后，其概率会转移到其他组；总出船概率不变。全部船抽齐后，出船改为钢铁补偿：礼物 250 · 超级/特级 1,250。','保底按去年规则假设：礼物 100 · 超级 15 · 特级 7 · 金色 10 次无船触发。','金色礼物补给箱从圣诞补给箱中掉落，单独开启。','价格为去年价格 — 15.11 价格尚未公布。','登录后通过 Wargaming 获取你的港口，按确切 ID 匹配舰船；不同版本分别计算。金色舰船不按登录过滤。','概率来自封闭测试 15.11 博客 — 正式上线前可能调整。','集齐金色礼物全部 7 艘船后，金色箱的出船奖励改为战火锻造高级补给箱；锻造箱 50% 出新泽西 BF，第 3 个保底必出，已有时改为 2,500 钢铁。'];
+  var howEn=['Won ships leave the pool — no duplicates.','If a group runs out, its chance moves to the other groups; the total ship % never changes. Once you own every ship, ship drops pay Steel instead: Gift 250 · Mega/Ultra 1,250.','Pity is assumed from last year: Gift 100 · Mega 15 · Ultra 7 · Golden 10 ship-less in a row.','Golden Gifts drop from Santa containers and open separately.','Prices are last year\'s, including shop bundles (8-pack −15%, 20-pack −25%; Ultra 8 for $67.98, 20 for $149) — 15.11 prices aren\'t published yet.','Login fetches your port via Wargaming and matches ships by exact ID; variants count separately. Golden ships aren\'t filtered by login.','Rates from the Closed Test 15.11 blog — may change before live.','Own all 7 Golden ships and Golden ship drops become Battle Forged Premium containers instead: 50% New Jersey BF, guaranteed on the 3rd; if you already own her, 2,500 Steel instead.'];
+  var howZh=['已获得的舰船会离开船池 — 不会重复掉落。','某组舰船抽完后，其概率会转移到其他组；总出船概率不变。全部船抽齐后，出船改为钢铁补偿：礼物 250 · 超级/特级 1,250。','保底按去年规则假设：礼物 100 · 超级 15 · 特级 7 · 金色 10 次无船触发。','金色礼物补给箱从圣诞补给箱中掉落，单独开启。','价格为去年价格，含商店捆绑包（8 个 −15%、20 个 −25%；特级 8 个 $67.98、20 个 $149）— 15.11 价格尚未公布。','登录后通过 Wargaming 获取你的港口，按确切 ID 匹配舰船；不同版本分别计算。金色舰船不按登录过滤。','概率来自封闭测试 15.11 博客 — 正式上线前可能调整。','集齐金色礼物全部 7 艘船后，金色箱的出船奖励改为战火锻造高级补给箱；锻造箱 50% 出新泽西 BF，第 3 个保底必出，已有时改为 2,500 钢铁。'];
   for(var i=0;i<8;i++) setT('how'+(i+1), LANG==='zh'? howZh[i] : howEn[i]);
   setT('convoyTitle', L('🎁 Holiday Convoy exchange (counts as owned)','🎁 节日护航队兑换（视为已拥有）'));
   setT('convoyHint', L('From Update 15.11, these three Golden ships can also be earned via the Holiday Convoy event. Tick the ones you plan to exchange for — the sim treats them as owned: they will not drop from Golden Gifts, and once all three normal Golden ships are owned, the Legacy chance rises to 10%. Changing a tick resets the session.','15.11 起这三艘金色船也可通过节日护航队活动兑换。勾选你打算换的 — 模拟时按已拥有处理：不再从金色箱掉落；三艘普通金色船全部拥有后，遗产船概率升至 10%。修改勾选会重置当前模拟。'));
@@ -1252,9 +1259,9 @@ function buildShareCard(){
   ctx.strokeStyle='#233243'; ctx.lineWidth=2; ctx.beginPath(); ctx.moveTo(M,206); ctx.lineTo(W-M,206); ctx.stroke();
   var ob=session.openedByType, r=session.rewards;
   var totalOpened=(ob.gift||0)+(ob.mega||0)+(ob.ultra||0)+session.goldenOpened+session.bfOpened;
-  var spentD=(ob.gift||0)*250+(ob.mega||0)*1250, ultraUsd=(ob.ultra||0)*10, totalUsd=spentD/250+ultraUsd;
-  var costParts=[]; if(spentD) costParts.push(fmtNum(spentD)+L(' doubloons',' 达布隆')); if(ultraUsd) costParts.push('$'+fmtNum(ultraUsd));
-  var costStr=costParts.join(' + ')+' · ≈ $'+fmtNum(Math.round(totalUsd));
+  var spentD=packCost(typeByKey('gift').packDbl, ob.gift||0)+packCost(typeByKey('mega').packDbl, ob.mega||0), ultraUsd=packCost(typeByKey('ultra').packUsd, ob.ultra||0), totalUsd=spentD/250+ultraUsd;
+  var costParts=[]; if(spentD) costParts.push(fmtNum(spentD)+L(' doubloons',' 达布隆')); if(ultraUsd) costParts.push('$'+fmtMoney(ultraUsd));
+  var costStr=costParts.join(' + ')+' · ≈ $'+fmtMoney(totalUsd);
   function cnt(g){ return ships.filter(function(s){return s.group===g}).length; }
   var gc=cnt('golden')+cnt('legacy');
   var statRows=[
