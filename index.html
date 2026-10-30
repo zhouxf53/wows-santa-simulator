@@ -1098,7 +1098,7 @@ function renderSession(pop){
   var lr=document.getElementById('lastRoll');
   if(!last) lr.textContent=L('No rolls yet.','暂无记录。');
   else if(last.ship) lr.innerHTML=L('Last roll (#','上次开箱（#')+last.n+L(', ','，')+typeShort(last.type)+L('): ','）：')+(last.ship.group==='bf'? '<b class="bf-win">🔥 '+shipDisplayHtml(last.ship)+'</b>' : '<b style="color:#fff">'+shipDisplayHtml(last.ship)+'</b>')+(last.ship.tier?' — '+roman(last.ship.tier):'')+' '+grpLabel(last.ship.group)+(last.forced? L(' · PITY drop',' · 保底') : '');
-  else lr.innerHTML=L('Last roll (#','上次开箱（#')+last.n+L(', ','，')+typeShort(last.type)+L('): ','）：')+'<b style="color:#fff">'+txt(last.headline)+'</b>'+(last.extras&&last.extras.length?' · '+last.extras.map(function(x){return txt(x)}).join(' · '):'');
+  else lr.innerHTML=L('Last roll (#','上次开箱（#')+last.n+L(', ','，')+typeShort(last.type)+L('): ','）：')+'<b style="color:#fff">'+txt(last.headline)+'</b>'+(last.forced? L(' · PITY drop',' · 保底') : '')+(last.extras&&last.extras.length?' · '+last.extras.map(function(x){return txt(x)}).join(' · '):'');
   // log
   var logEl=document.getElementById('rollLog');
   if(!session.log.length){ logEl.innerHTML='<li><span class="noship">—</span></li>'; }
@@ -1106,7 +1106,7 @@ function renderSession(pop){
     logEl.innerHTML=session.log.slice(0,200).map(function(e){
       if(e.ship) return '<li'+(e.ship.group==='bf'?' class="bf-row"':'')+'><span class="num">'+e.n+'</span><span class="tag">'+typeShort(e.type)+'</span><span class="ship-win'+(e.ship.group==='bf'?' bf-win':'')+'" style="flex:1">'+(e.ship.group==='bf'?'🔥 ':'')+shipDisplayHtml(e.ship)+(e.ship.tier?' <small style="color:var(--muted)">'+roman(e.ship.tier)+'</small>':'')+'</span><span class="grp '+e.ship.group+'">'+grpLabel(e.ship.group)+'</span>'+(e.forced?'<span class="tag">'+L('PITY','保底')+'</span>':'')+'</li>';
       var extra=(e.extras&&e.extras.length)? '<span class="log-extra">'+e.extras.map(function(x){return txt(x)}).join('<br>')+'</span>' : '';
-      return '<li><span class="num">'+e.n+'</span><span class="tag">'+typeShort(e.type)+'</span><span style="flex:1"><span class="'+((e.goldenWin||e.bfWin)?'golden-win':'reward-txt')+'">'+txt(e.headline)+'</span>'+extra+'</span></li>';
+      return '<li><span class="num">'+e.n+'</span><span class="tag">'+typeShort(e.type)+'</span><span style="flex:1"><span class="'+((e.goldenWin||e.bfWin)?'golden-win':'reward-txt')+'">'+txt(e.headline)+'</span>'+extra+'</span>'+(e.forced?'<span class="tag">'+L('PITY','保底')+'</span>':'')+'</li>';
     }).join('')+(session.log.length>200?'<li><span class="noship">…</span></li>':'');
   }
   // acquired panel grouped
