@@ -1,0 +1,1401 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+<meta name="color-scheme" content="dark"/>
+<link rel="icon" href="data:,"/>
+<title>Santa’s Gift Container Simulator — World of Warships</title>
+<meta name="description" content="Fan-made simulator for World of Warships Santa’s Gift, Mega and Ultra containers: the full 143-ship pool, pity timers, Golden Gift and Battle Forged containers, real bundle pricing, and optional Wargaming login to sync your own port."/>
+<meta property="og:type" content="website"/>
+<meta property="og:title" content="Santa’s Gift Container Simulator — World of Warships"/>
+<meta property="og:description" content="Simulate Santa’s Gift / Mega / Ultra container openings against your own port: 143-ship pool, pity timers, Golden Gifts, Battle Forged containers and bundle pricing. Fan-made, runs in your browser."/>
+<meta property="og:url" content="https://zhouxf53.github.io/wows-santa-simulator/en"/>
+<style>
+:root{
+  --bg:#0c1218; --panel:#131c26; --panel2:#0f1720; --line:#233243; --line2:#2c3e52;
+  --text:#e8eef3; --muted:#9db0c2; --muted2:#c7d3de;
+  --gold:#e8b34d; --red:#d9534a; --ice:#6fc3df; --green:#3fb27f;
+  --rare:#e8b34d; --mid:#6fc3df; --common:#a8b6c2;
+  --radius:14px;
+}
+*{box-sizing:border-box}
+[hidden]{display:none !important}
+html,body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+a{color:var(--ice)}
+.wrap{max-width:1180px;margin:0 auto;padding:20px 16px 40px}
+.top{padding:6px 0 18px;border-bottom:1px solid var(--line)}
+.top h1{font-size:28px;line-height:1.05;letter-spacing:-.02em;margin:0;font-weight:800}
+.top h1 span{color:var(--gold)}
+.sub{color:var(--muted);font-size:14px;line-height:1.55;margin:8px 0 0;max-width:720px}
+.player{margin-top:14px;display:flex;flex-wrap:wrap;gap:8px}
+.chip{border:1px solid var(--line);background:var(--panel);border-radius:999px;padding:7px 11px;font-size:12.5px;color:var(--muted2)}
+.chip b{color:#fff;font-size:13px}
+.chip.gold{border-color:#5a451d;background:#1e1a0f;color:#f3d48a}
+.layout{display:grid;grid-template-columns:340px 1fr;gap:16px;margin-top:16px}
+@media(max-width:860px){.layout{grid-template-columns:1fr}}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:16px}
+.card h2{margin:0 0 4px;font-size:15px;letter-spacing:.01em}
+.card h3{margin:0 0 8px;font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.hint{font-size:12.5px;color:var(--muted);line-height:1.5}
+label{font-size:13px;color:var(--muted2);font-weight:600}
+.cont-row{display:grid;grid-template-columns:1fr 86px;gap:10px;align-items:center;padding:12px 0;border-bottom:1px solid var(--line)}
+.cont-row:last-of-type{border-bottom:0}
+.cont-name{font-weight:700;font-size:14px}
+.cont-rate{font-size:12px;color:var(--muted);margin-top:2px;line-height:1.4}
+input[type=number],select{width:100%;background:#0a0f14;border:1px solid var(--line2);color:#fff;border-radius:9px;padding:10px 10px;font-size:15px;font-weight:700;text-align:center}
+select{text-align:left;font-weight:600;font-size:14px}
+.field{margin-top:14px}
+.field label{display:block;margin-bottom:6px}
+.switch-row{display:flex;gap:12px;align-items:flex-start;padding:13px 0;border-top:1px solid var(--line)}
+.switch-row input{width:20px;height:20px;accent-color:var(--gold);margin-top:2px;flex-shrink:0}
+.switch-row strong{font-size:13.5px;display:block;line-height:1.3}
+.switch-row p{margin:3px 0 0;font-size:12.5px;color:var(--muted);line-height:1.5}
+.btn{width:100%;background:var(--gold);color:#111;border:0;border-radius:11px;padding:14px;font-size:15px;font-weight:800;cursor:pointer;margin-top:14px}
+.btn:active{transform:scale(.99)}
+.total-line{display:flex;justify-content:space-between;margin-top:12px;font-size:13px;color:var(--muted)}
+.total-line b{color:#fff}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+@media(max-width:640px){.stats{grid-template-columns:repeat(2,1fr)}}
+.stat{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:13px}
+.stat small{display:block;color:var(--muted);font-size:11.5px;letter-spacing:.05em;text-transform:uppercase;font-weight:700}
+.stat strong{display:block;font-size:26px;line-height:1;margin-top:7px;letter-spacing:-.02em}
+.stat span{font-size:12px;color:var(--muted)}
+.hist{margin-top:16px}
+.hrow{display:grid;grid-template-columns:28px 1fr 86px;gap:10px;align-items:center;margin:6px 0;font-size:12.5px}
+.hbar{height:18px;background:#0a0f14;border:1px solid var(--line);border-radius:6px;overflow:hidden}
+.hfill{height:100%;background:linear-gradient(90deg,#2a7ea6,var(--ice));min-width:2px}
+.hfill.zero{background:#2b3a4a}
+.group-head{display:flex;justify-content:space-between;align-items:center;margin:18px 0 8px}
+.group-head h3{margin:0}
+.badge{font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;padding:4px 7px;border-radius:999px;border:1px solid var(--line2)}
+.badge.rare{color:#1a1400;background:var(--rare);border-color:var(--rare)}
+.badge.mid{color:#06181f;background:var(--mid);border-color:var(--mid)}
+.badge.common{color:#111;background:#d6dde3;border-color:#d6dde3}
+.ship-row{display:grid;grid-template-columns:1fr 120px 52px;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid #1d2a38}
+@media(max-width:560px){.ship-row{grid-template-columns:1fr 70px 44px}}
+.ship-name{font-size:13.5px;font-weight:600;line-height:1.3}
+.ship-name small{color:var(--muted);font-weight:600}
+.coal{font-size:10.5px;background:#223018;color:#a7d68a;border:1px solid #3a5a28;padding:2px 5px;border-radius:999px;margin-left:6px;white-space:nowrap;font-weight:700}
+.pbar{height:8px;background:#0a0f14;border-radius:999px;overflow:hidden;border:1px solid var(--line)}
+.pfill{height:100%}
+.pfill.rare{background:var(--rare)} .pfill.mid{background:var(--ice)} .pfill.common{background:#d6dde3}
+.pct{font-variant-numeric:tabular-nums;font-weight:800;font-size:13px;text-align:right}
+.sample{list-style:none;margin:0;padding:0}
+.sample li{display:flex;gap:10px;padding:9px 0;border-bottom:1px solid #1d2a38;font-size:13.5px;align-items:center}
+.sample li:last-child{border:0}
+.num{width:26px;height:26px;border-radius:50%;background:#222f3f;border:1px solid var(--line2);display:grid;place-items:center;font-size:12px;font-weight:800;flex-shrink:0}
+.tag{font-size:11px;padding:3px 6px;border-radius:999px;background:#1e2c3c;color:var(--muted2);border:1px solid var(--line);white-space:nowrap}
+.notes{font-size:12.5px;color:var(--muted);line-height:1.65}
+.notes li{margin:5px 0}
+.empty{color:var(--muted);font-size:13.5px;padding:10px 0}
+details{margin-top:6px}
+summary{cursor:pointer;color:var(--muted2);font-size:13px;font-weight:700}
+.roll-hero{border-color:#5a451d;background:linear-gradient(180deg,#171a12,#131c26)}
+.type-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:12px 0}
+@media(max-width:640px){.type-grid{grid-template-columns:1fr}}
+.type-btn{background:#0a0f14;border:1.5px solid var(--line2);color:var(--text);border-radius:12px;padding:12px;text-align:left;cursor:pointer}
+.type-btn.active{border-color:var(--gold);background:#1e1a0f}
+.type-btn strong{display:block;font-size:14px}
+.type-btn span{display:block;font-size:12px;color:var(--muted);margin-top:4px;line-height:1.45}
+.roll-actions{display:flex;flex-wrap:wrap;gap:9px;align-items:center;margin-top:12px}
+.btn-dice{background:var(--gold);color:#111;border:0;border-radius:11px;padding:13px 18px;font-size:15px;font-weight:900;cursor:pointer}
+.btn-sec{background:#222f3f;color:#fff;border:1px solid var(--line2);border-radius:11px;padding:12px 14px;font-size:13.5px;font-weight:800;cursor:pointer}
+.btn-reset{background:transparent;color:#f0a49e;border:1px solid #6b2f2a;border-radius:11px;padding:12px 14px;font-size:13.5px;font-weight:800;cursor:pointer}
+.openx{display:flex;gap:6px;align-items:center}
+.openx input{width:70px}
+.pitybar{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.pity-pill{font-size:12px;color:var(--muted2);background:#0a0f14;border:1px solid var(--line);border-radius:999px;padding:6px 10px}
+.pity-pill b{color:#fff}
+.session-grid{display:grid;grid-template-columns:1.1fr .9fr;gap:16px;margin-top:16px}
+@media(max-width:860px){.session-grid{grid-template-columns:1fr}}
+.log{list-style:none;margin:0;padding:0;max-height:520px;overflow:auto}
+.log li{display:flex;gap:10px;align-items:center;padding:9px 0;border-bottom:1px solid #1d2a38;font-size:13.5px}
+.log li:last-child{border:0}
+.ship-win{font-weight:800;color:#fff}
+.grp{font-size:10.5px;font-weight:900;letter-spacing:.05em;padding:3px 6px;border-radius:999px;text-transform:uppercase;white-space:nowrap}
+.grp.rare{background:var(--rare);color:#1a1400}.grp.mid{background:var(--ice);color:#06181f}.grp.common{background:#d6dde3;color:#111}
+.noship{color:var(--muted)}
+.acq-group{margin-top:12px}
+.acq-group h4{margin:0 0 6px;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.acq-chips{display:flex;flex-wrap:wrap;gap:6px}
+.acq-chip{background:#0a0f14;border:1px solid var(--line2);border-radius:999px;padding:6px 9px;font-size:12.5px;font-weight:700}
+.remaining{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+@keyframes pop{0%{transform:scale(.97)}100%{transform:scale(1)}}
+.pop{animation:pop .18s ease}
+.type-btn .price-line{display:block;color:var(--gold);font-weight:800;font-size:12.5px;margin-top:5px}
+.costbar{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.cost-pill{font-size:12.5px;color:var(--muted2);background:#1e1a0f;border:1px solid #5a451d;border-radius:999px;padding:7px 11px}
+.cost-pill b{color:#fff}
+.cost-pill.gold b{color:#f3d48a}
+.cost-pill.win{border-color:#3a5a28;background:#16200f;color:#c4e3ae}
+.cost-pill.win b{color:#a7d68a}
+.reward-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:4px}
+@media(max-width:860px){.reward-grid{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:560px){.reward-grid{grid-template-columns:repeat(2,1fr)}}
+.reward-tile{background:#0a0f14;border:1px solid var(--line);border-radius:10px;padding:10px 11px}
+.reward-tile small{display:block;color:var(--muted);font-size:11px;letter-spacing:.04em;text-transform:uppercase;font-weight:700;line-height:1.35}
+.reward-tile strong{display:block;font-size:17px;margin-top:4px;letter-spacing:-.01em}
+.reward-tile span{font-size:11.5px;color:var(--muted)}
+.golden-bar{display:flex;flex-wrap:wrap;gap:9px;align-items:center;margin-top:14px;background:#1e1a0f;border:1px solid #5a451d;border-radius:12px;padding:12px 14px}
+.golden-bar .g-title{font-weight:800;font-size:14px;color:#f3d48a}
+.golden-bar .g-count{font-size:13px;color:var(--muted2)}
+.btn-gold{background:var(--gold);color:#111;border:0;border-radius:10px;padding:11px 15px;font-size:13.5px;font-weight:900;cursor:pointer}
+.btn-gold-sec{background:transparent;color:#f3d48a;border:1px solid #5a451d;border-radius:10px;padding:10px 13px;font-size:13px;font-weight:800;cursor:pointer}
+.btn-gold[disabled],.btn-gold-sec[disabled]{opacity:.4;cursor:not-allowed}
+.log-extra{display:block;font-size:12px;color:var(--muted);margin-top:2px;line-height:1.45}
+.reward-txt{font-weight:600;color:var(--muted2)}
+.golden-win{color:var(--gold);font-weight:800}
+.grp.golden,.grp.legacy{background:var(--gold);color:#1a1400}
+.grp.bf{background:linear-gradient(90deg,#ff512f,#dd2476);color:#fff}
+.bf-win{font-weight:900;background:linear-gradient(90deg,#ffb347,#ff512f,#ff2e63);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 0 6px rgba(255,81,47,.45))}
+li.bf-row{background:linear-gradient(90deg,rgba(255,81,47,.20),rgba(221,36,118,.10));border-radius:10px;animation:bfPulse 1.6s ease-in-out infinite}
+@keyframes bfPulse{0%,100%{box-shadow:inset 0 0 0 1px rgba(255,81,47,.35)}50%{box-shadow:inset 0 0 0 1px rgba(255,120,60,.95),0 0 12px rgba(255,81,47,.40)}}
+.acq-chip.bf-chip{background:linear-gradient(90deg,rgba(255,81,47,.30),rgba(221,36,118,.24));border:1px solid rgba(255,120,60,.8);color:#fff;font-weight:800}
+#fwCanvas{position:fixed;inset:0;width:100%;height:100%;z-index:9998;pointer-events:none}
+.celebrate-banner{position:fixed;left:50%;top:18%;transform:translate(-50%,-50%) scale(.9);z-index:9999;text-align:center;padding:22px 36px;border-radius:18px;opacity:0;pointer-events:none;transition:opacity .25s ease,transform .25s ease;max-width:92vw}
+.celebrate-banner.show{opacity:1;pointer-events:auto;transform:translate(-50%,-50%) scale(1);cursor:pointer}
+.celebrate-banner .cb-title{font-size:14px;letter-spacing:.35em;font-weight:700}
+.celebrate-banner .cb-ship{font-size:34px;font-weight:900;margin-top:6px;line-height:1.25}
+.celebrate-banner .cb-sub{font-size:13px;margin-top:8px;opacity:.85}
+.celebrate-banner.tier-bf{background:radial-gradient(ellipse at center,rgba(60,8,4,.93),rgba(20,2,8,.95));box-shadow:0 0 60px rgba(255,81,47,.65),inset 0 0 0 2px rgba(255,150,60,.85);color:#ffe9d6}
+.celebrate-banner.tier-bf .cb-ship{background:linear-gradient(90deg,#ffb347,#ff512f,#ff2e63);-webkit-background-clip:text;background-clip:text;color:transparent}
+.celebrate-banner.tier-gold{top:13%;background:radial-gradient(ellipse at center,rgba(66,50,4,.94),rgba(24,18,2,.96));box-shadow:0 0 44px rgba(255,196,0,.5),inset 0 0 0 2px rgba(255,215,64,.8);color:#fff3c4}
+.celebrate-banner.tier-gold .cb-ship{color:var(--gold);font-size:26px}
+.celebrate-banner.tier-rare{top:auto;bottom:24px;transform:translate(-50%,16px);padding:12px 22px;background:rgba(16,24,40,.93);box-shadow:0 0 24px rgba(120,170,255,.35),inset 0 0 0 1px rgba(140,180,255,.55);color:#dbeafe}
+.celebrate-banner.tier-rare.show{transform:translate(-50%,0)}
+.celebrate-banner.tier-rare .cb-ship{font-size:19px;color:#fff}
+.celebrate-banner.tier-rare .cb-title{font-size:11px}
+.ship-reveal{position:fixed;inset:0;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .35s ease;overflow:hidden;text-align:center;padding:18px}
+.ship-reveal.show{opacity:1;pointer-events:auto;cursor:pointer}
+.ship-reveal .sr-bg{position:absolute;inset:0}
+.ship-reveal.tier-rare .sr-bg{background:radial-gradient(ellipse at 50% 62%,rgba(38,84,168,.5),rgba(3,6,14,.96) 68%)}
+.ship-reveal.tier-gold .sr-bg{background:radial-gradient(ellipse at 50% 62%,rgba(146,106,8,.5),rgba(12,9,1,.96) 68%)}
+.ship-reveal.tier-bf .sr-bg{background:radial-gradient(ellipse at 50% 62%,rgba(150,32,8,.55),rgba(10,2,4,.96) 68%)}
+.ship-reveal .sr-imgwrap{position:relative;width:min(94vw,1050px);line-height:0}
+.ship-reveal.tier-rare .sr-imgwrap{filter:drop-shadow(0 14px 44px rgba(96,165,250,.45))}
+.ship-reveal.tier-gold .sr-imgwrap{filter:drop-shadow(0 14px 48px rgba(255,196,0,.5))}
+.ship-reveal.tier-bf .sr-imgwrap{filter:drop-shadow(0 14px 52px rgba(255,81,47,.6))}
+.ship-reveal .sr-img{width:100%;height:auto;max-height:56vh;object-fit:contain;animation:srIn 2.6s cubic-bezier(.22,.8,.3,1) forwards}
+@keyframes srIn{0%{transform:scale(.78) translateY(16px);opacity:.35;filter:brightness(.5)}55%{opacity:1;filter:brightness(1.12)}100%{transform:scale(1.02) translateY(0);opacity:1;filter:brightness(1.04)}}
+.ship-reveal .sr-shine{position:absolute;inset:0;background:linear-gradient(115deg,transparent 32%,rgba(255,255,255,.20) 50%,transparent 68%);transform:translateX(-130%);animation:srShine 1.5s ease .5s forwards;mix-blend-mode:screen;pointer-events:none}
+@keyframes srShine{to{transform:translateX(130%)}}
+.ship-reveal .sr-txt{position:relative;margin-top:14px;color:#eef2ff;animation:srTxt .7s ease .55s both}
+@keyframes srTxt{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+.ship-reveal .sr-title{font-size:14px;letter-spacing:.4em;font-weight:700}
+.ship-reveal.tier-rare .sr-title{color:#bfdbfe}
+.ship-reveal.tier-gold .sr-title{color:#ffd94d}
+.ship-reveal.tier-bf .sr-title{background:linear-gradient(90deg,#ffb347,#ff512f,#ff2e63);-webkit-background-clip:text;background-clip:text;color:transparent}
+.ship-reveal .sr-name{font-size:min(46px,9vw);font-weight:900;line-height:1.2;margin-top:6px;text-shadow:0 2px 22px rgba(0,0,0,.65)}
+.ship-reveal .sr-name .ship-en-sub{font-size:.42em;font-weight:600;opacity:.75}
+.ship-reveal .sr-sub{font-size:13.5px;margin-top:8px;opacity:.85}
+.ship-reveal .sr-hint{font-size:11.5px;margin-top:14px;opacity:.5;letter-spacing:.15em}
+@media(max-width:640px){ .ship-reveal .sr-img{max-height:46vh} .ship-reveal .sr-title{font-size:12px;letter-spacing:.22em} .ship-reveal .sr-name{font-size:30px} }
+.type-btn .drops-line{display:block;font-size:11.5px;color:var(--muted);margin-top:4px;line-height:1.45}
+.login-panel{margin-top:14px;background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:16px}
+.login-panel h2{margin:0 0 6px;font-size:16px}
+.login-btns{display:flex;flex-wrap:wrap;gap:9px;margin-top:12px}
+.btn-login{background:var(--gold);color:#111;border:0;border-radius:10px;padding:11px 16px;font-size:14px;font-weight:900;cursor:pointer}
+.btn-login-sec{background:#222f3f;color:#fff;border:1px solid var(--line2);border-radius:10px;padding:11px 16px;font-size:14px;font-weight:800;cursor:pointer}
+.btn-logout{background:transparent;color:#f0a49e;border:1px solid #6b2f2a;border-radius:10px;padding:10px 14px;font-size:13.5px;font-weight:800;cursor:pointer}
+.login-error{margin-top:10px;background:#2a1512;border:1px solid #6b2f2a;color:#f3c1bc;border-radius:10px;padding:11px 13px;font-size:13.5px;line-height:1.5}
+.login-status{margin-top:8px;font-size:13px;color:var(--muted)}
+.login-user{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between}
+/* --- UI overhaul: compact, action-first --- */
+.wrap{max-width:980px;padding:18px 16px 36px}
+.top{border:0;padding-bottom:4px}
+.top h1{font-size:30px}
+.sub{font-size:15px;margin-top:6px}
+.login-row{display:flex;flex-wrap:wrap;gap:7px;align-items:center;margin-top:12px}
+.login-row .lbl{font-size:13px;color:var(--muted);font-weight:700;margin-right:2px}
+.btn-login{background:#222f3f;color:#fff;border:1px solid var(--line2);border-radius:999px;padding:8px 14px;font-size:13px;font-weight:800;cursor:pointer}
+.btn-logout{padding:7px 12px;font-size:12.5px;border-radius:999px}
+.login-error{font-size:13px;padding:9px 11px}
+.hero{margin-top:16px;background:var(--panel);border:1px solid #5a451d;border-radius:16px;padding:18px}
+.type-grid{margin:0 0 6px}
+.type-btn{padding:14px}
+.type-btn strong{font-size:15px}
+.type-btn .price-line{font-size:13px}
+.btn-dice{width:100%;padding:16px;font-size:17px;border-radius:12px;margin-top:10px}
+.roll-actions{margin-top:10px}
+.roll-actions .btn-sec{flex:1}
+.tinyline{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center;margin-top:12px;font-size:12px;color:var(--muted)}
+.tinyline b{color:#fff}
+.tinyline label{display:inline-flex;gap:6px;align-items:center;cursor:pointer;color:var(--muted2);font-size:12px}
+.tinyline input{width:16px;height:16px;accent-color:var(--gold)}
+.costline{margin-top:10px;font-size:13.5px;color:var(--muted2);background:#0a0f14;border:1px solid var(--line);border-radius:10px;padding:10px 12px;line-height:1.5}
+.costline b{color:#fff}
+.golden-bar{margin-top:10px;padding:9px 12px;opacity:.55}
+.golden-bar.has{opacity:1;background:#241d0d}
+.golden-bar .g-count{font-size:12.5px}
+.convoy-bar{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;margin-top:10px;background:var(--panel2);border:1px dashed #5a451d;border-radius:12px;padding:10px 12px}
+.convoy-bar .cv-title{font-weight:800;font-size:13px;color:#f3d48a;flex:1 1 100%}
+.cv-opt{display:inline-flex;gap:6px;align-items:center;font-size:13px;color:var(--muted2);cursor:pointer;font-weight:600}
+.cv-opt input{width:17px;height:17px;accent-color:var(--gold);cursor:pointer}
+.panel{margin-top:16px;background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:18px}
+.panel h2{margin:0;font-size:19px}
+.reward-grid{grid-template-columns:repeat(4,1fr);gap:7px;margin-top:10px}
+@media(max-width:560px){.reward-grid{grid-template-columns:repeat(3,1fr)}}
+.reward-tile{padding:8px 10px}
+.reward-tile small{font-size:10px}
+.reward-tile strong{font-size:15px;margin-top:2px}
+.reward-tile span{display:none}
+.log{max-height:360px}
+.log li{padding:6px 0;font-size:13px}
+.num{width:22px;height:22px;font-size:11px}
+details.how{margin-top:16px;background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:12px 16px}
+details.how summary{font-size:14px}
+details.how ul{margin:10px 0 4px;padding-left:18px;color:var(--muted);font-size:13px;line-height:1.6}
+.acq-chip{padding:7px 11px;font-size:13px}
+.empty{font-size:14px;color:var(--muted)}
+.lang-toggle{display:flex;gap:6px;justify-content:flex-end;margin-bottom:10px}
+.lang-btn{background:#222f3f;color:var(--muted2);border:1px solid var(--line2);border-radius:999px;padding:7px 13px;font-size:13px;font-weight:800;cursor:pointer}
+.lang-btn.active{background:var(--gold);color:#111;border-color:var(--gold)}
+.paste-row{display:flex;gap:7px;margin-top:10px;align-items:center}
+.paste-row input{flex:1;min-width:0;background:#0a0f14;border:1px solid var(--line2);color:var(--text);border-radius:999px;padding:9px 13px;font-size:13px}
+.paste-row input::placeholder{color:var(--muted)}
+.btn-paste{background:var(--gold);color:#111;border:0;border-radius:999px;padding:9px 15px;font-size:13px;font-weight:900;cursor:pointer;white-space:nowrap}
+.share-overlay{position:fixed;inset:0;background:rgba(4,8,12,.9);z-index:10001;display:flex;align-items:flex-start;justify-content:center;padding:22px 14px;overflow:auto}
+.share-box{width:100%;max-width:430px;text-align:center}
+.share-box img{width:100%;height:auto;border-radius:14px;box-shadow:0 12px 44px rgba(0,0,0,.6)}
+.share-btns{display:flex;gap:9px;margin-top:13px;justify-content:center;flex-wrap:wrap}
+.share-btns .btn-gold,.share-btns .btn-gold-sec{text-decoration:none;display:inline-block}
+.pool-fold{margin-top:16px;background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+.pool-item .ship-en-sub{display:block;margin-top:1px}
+.pool-fold summary{cursor:pointer;font-weight:800;font-size:13px;color:#cfe3f5;display:flex;gap:8px;align-items:center;flex-wrap:wrap;list-style:none}
+.pool-fold summary::-webkit-details-marker{display:none}
+.pool-fold summary::after{content:'▸';margin-left:auto;color:var(--muted2);font-size:14px}
+.pool-fold[open ] summary::after{content:'▾'}
+.pool-fold .chip{font-weight:700}
+.pool-fold-note{font-size:12px;color:var(--gold);font-weight:700}
+.pool-tools{display:flex;gap:8px;margin:10px 0 2px;flex-wrap:wrap}
+.pool-tools input[type=search]{flex:1 1 180px;min-width:0;background:#0a0f14;border:1px solid var(--line2);border-radius:999px;color:var(--text);padding:8px 13px;font-size:13px}
+.pool-tools input[type=search]::placeholder{color:var(--muted)}
+.btn-mini{padding:7px 11px;font-size:12.5px;border-radius:999px}
+.pool-group{margin-top:12px}
+.pool-group-head{display:flex;gap:7px;align-items:center;flex-wrap:wrap;margin-bottom:6px}
+.pool-group-head b{font-size:13px;color:#fff}
+.pool-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(178px,1fr));gap:3px 10px}
+.pool-item{display:flex;gap:6px;align-items:center;font-size:12.5px;color:var(--muted2);padding:4px 6px;border-radius:6px;cursor:pointer;font-weight:600}
+.pool-item:hover{background:#0a0f14;color:#fff}
+.pool-item input{width:16px;height:16px;accent-color:var(--gold);cursor:pointer;flex:none}
+.pool-fold.disabled .pool-fold-body{opacity:.45;pointer-events:none}
+.ship-en-sub{color:var(--muted);font-weight:500;font-size:11.5px;letter-spacing:0}
+.ship-win .ship-en-sub{font-weight:600}
+.acq-chip .ship-en-sub{font-size:11px}
+/* --- Mobile adaptation (<=640px) --- */
+@media(max-width:640px){
+  .wrap{padding:12px 10px 28px}
+  .top h1{font-size:23px}
+  .sub{font-size:13px}
+  .login-row{gap:6px}
+  .hero{padding:13px 11px;border-radius:14px;margin-top:12px}
+  .type-grid{grid-template-columns:repeat(3,1fr);gap:6px}
+  .type-btn{padding:9px 7px;border-radius:10px}
+  .type-btn strong{font-size:12px;line-height:1.3}
+  .type-btn span{font-size:10.5px;margin-top:3px;line-height:1.35}
+  .type-btn .price-line{font-size:10.5px;margin-top:3px}
+  .btn-dice{font-size:16px;padding:15px 10px;margin-top:8px}
+  .roll-actions{gap:7px;margin-top:9px}
+  .roll-actions .btn-sec{padding:11px 8px;font-size:13px}
+  .btn-reset{padding:11px 10px;font-size:13px}
+  .openx input{width:60px;padding:9px 6px;font-size:14px}
+  .hint{font-size:12px}
+  .tinyline{font-size:11.5px;gap:5px 10px;margin-top:10px}
+  .costline{font-size:12px;padding:9px 10px;line-height:1.6}
+  .golden-bar{padding:10px;gap:7px}
+  .golden-bar .g-title{font-size:13px;flex:1 1 100%}
+  .golden-bar .btn-gold,.golden-bar .btn-gold-sec{flex:1;padding:11px 8px}
+  .convoy-bar{gap:7px 10px;padding:9px 10px}
+  .cv-opt{font-size:12.5px}
+  .pool-fold{padding:9px 10px}
+  .pool-grid{grid-template-columns:repeat(auto-fill,minmax(148px,1fr));gap:2px 6px}
+  .pool-item{font-size:12px;padding:4px 4px}
+  .pool-tools input[type=search]{font-size:12.5px}
+  .panel{padding:14px 11px;border-radius:14px;margin-top:12px}
+  .panel h2{font-size:16.5px}
+  .remaining{gap:6px}
+  .chip{font-size:11.5px;padding:6px 9px}
+  .acq-chip{font-size:12px;padding:6px 9px}
+  .reward-grid{gap:6px}
+  .reward-tile{padding:7px 8px}
+  .reward-tile strong{font-size:14px}
+  .log{max-height:320px}
+  .log li{gap:6px;font-size:12.5px;padding:7px 0}
+  .log .tag{font-size:10px;padding:2px 5px}
+  .grp{font-size:9.5px;padding:2px 5px}
+  .ship-win{min-width:0;overflow-wrap:anywhere}
+  .log-extra{font-size:11px}
+  .celebrate-banner{padding:18px 14px;top:16%}
+  .celebrate-banner .cb-title{font-size:11.5px;letter-spacing:.18em}
+  .celebrate-banner .cb-ship{font-size:23px;overflow-wrap:anywhere}
+  .celebrate-banner.tier-gold .cb-ship{font-size:20px}
+  .celebrate-banner.tier-rare{bottom:14px}
+  .celebrate-banner.tier-rare .cb-ship{font-size:16.5px}
+  details.how{padding:10px 12px}
+  .paste-row input{font-size:12.5px;padding:8px 11px}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="lang-toggle" role="group" aria-label="Language / 语言">
+      <button type="button" id="langZh" class="lang-btn active">简体中文</button>
+      <button type="button" id="langEn" class="lang-btn">English</button>
+    </div>
+    <h1 id="pageTitle">Santa’s Gift Containers <span>🎄</span></h1>
+    <p class="sub" id="subTitle">Open Santa’s Gift containers and see which ships you pull.</p>
+    <div class="player" id="stateChips">
+      <span class="chip gold"><b>143 艘船可掉落</b></span><span class="chip">稀有 <b>42</b></span><span class="chip">中级 <b>53</b></span><span class="chip">普通 <b>48</b></span>
+    </div>
+    <div id="loginPanel">
+      <div class="login-row" id="loginLoggedOut">
+        <span class="lbl" id="loginLbl">你的港口：</span>
+        <button class="btn-login" data-login-realm="eu" type="button">登录 · 欧洲</button>
+        <button class="btn-login" data-login-realm="com" type="button">登录 · 北美</button>
+        <button class="btn-login" data-login-realm="asia" type="button">登录 · 亚洲</button>
+        <span class="login-status" id="loginStatus"></span>
+      </div>
+      <div class="login-status" id="loginHint" style="margin-top:6px">登录后自动同步你的港口</div>
+      <div class="login-row" id="loginLoggedIn" hidden>
+        <span class="chip gold"><b id="loginUserTitle">已登录</b>&nbsp;<span id="loginUserDetail"></span></span>
+        <button class="btn-logout" id="btnLogout" type="button">退出登录</button>
+        <span class="login-status" id="loginStatusIn"></span>
+      </div>
+      <div class="login-error" id="loginError" hidden></div>
+    </div>
+  </header>
+
+  <section class="hero" id="rollHero">
+    <div class="type-grid" role="group" aria-label="Container type">
+      <button class="type-btn" data-type="gift"><strong id="tn-gift">圣诞礼物补给箱</strong><span id="effDesc-gift">2.5% 出船</span><span class="price-line" id="price-gift">250 达布隆 · ≈ $1</span></button>
+      <button class="type-btn active" data-type="mega"><strong id="tn-mega">圣诞超级礼物补给箱</strong><span id="effDesc-mega">16% 出船</span><span class="price-line" id="price-mega">1,250 达布隆 · ≈ $5</span></button>
+      <button class="type-btn" data-type="ultra"><strong id="tn-ultra">圣诞特级礼物补给箱</strong><span id="effDesc-ultra">32% 出船</span><span class="price-line" id="price-ultra">每个 $10</span></button>
+    </div>
+    <button class="btn-dice" id="btnRoll">🎲 打开 20 个</button>
+    <div class="roll-actions">
+      <button class="btn-sec" id="btnRoll10">打开 10 个</button>
+      <span class="openx"><input type="number" id="inOpenX" aria-label="数量" value="20" min="1" max="9999"></span>
+      <button class="btn-reset" id="btnReset">↺ 重置</button>
+    </div>
+    <p class="hint" id="batchCost" style="margin:8px 0 0">打开 20 × 超级 = 25,000 达布隆 ≈ $100</p>
+    <div class="tinyline">
+      <label><input type="checkbox" id="inPity" checked> <span id="pityLbl">保底</span></label>
+      <span><span id="pl-gift">礼物</span> <b id="pityGift">0 / 100</b></span>
+      <span><span id="pl-mega">超级</span> <b id="pityMega">0 / 15</b></span>
+      <span><span id="pl-ultra">特级</span> <b id="pityUltra">0 / 7</b></span>
+      <span><span id="pl-golden">金色</span> <b id="pityGolden">0 / 10</b></span>
+      <span id="liveOdds"></span>
+    </div>
+    <div class="costline" id="costBar"><span id="costOpenedLbl">已打开</span> <b id="sessOpened">0</b> · <b id="costDoubloons">0 达布隆</b> <span id="costDoubloonDollars"></span> · <span id="costWonLbl">赢回</span> <b id="costWonBack">0 达布隆</b> · <span id="costNetLbl">净花费</span> <b id="costNet">0</b> <span id="costNetDollars"></span> · <span id="costUltraLbl">特级</span> <b id="costUltraDollars">$0</b> · <b id="costCombined">≈ $0</b> &nbsp;<span id="costBreakdown"></span></div>
+    <div class="golden-bar" id="goldenBar">
+      <span class="g-title" id="goldenTitle">✦ 金色礼物补给箱</span>
+      <span class="g-count" id="goldenCount">×0</span>
+      <button class="btn-gold" id="btnGolden" disabled>打开</button>
+      <button class="btn-gold-sec" id="btnGoldenAll" disabled>全部打开</button>
+    </div>
+    <div class="golden-bar" id="bfBar">
+      <span class="g-title" id="bfTitle">🔥 战火锻造高级补给箱</span>
+      <span class="g-count" id="bfCount">×0</span>
+      <button class="btn-gold" id="btnBF" disabled>打开</button>
+      <button class="btn-gold-sec" id="btnBFAll" disabled>全部打开</button>
+    </div>
+    <div class="convoy-bar" id="convoyBar">
+      <span class="cv-title" id="convoyTitle">🎁 节日护航队兑换（视为已拥有）</span>
+      <label class="cv-opt"><input type="checkbox" class="convoyChk" data-ship="Rodina"> <span>祖国 Rodina</span></label>
+      <label class="cv-opt"><input type="checkbox" class="convoyChk" data-ship="Latouche-Tréville"> <span>拉图什·特雷维尔 Latouche-Tréville</span></label>
+      <label class="cv-opt"><input type="checkbox" class="convoyChk" data-ship="Tōgasa"> <span>托加萨 Tōgasa</span></label>
+    </div>
+    <p class="hint" id="convoyHint" style="margin:8px 0 0">15.11 起这三艘金色船也可通过节日护航队活动兑换。勾选你打算换的 — 模拟时按已拥有处理：不再从金色箱掉落；三艘普通金色船全部拥有后，遗产船概率升至 10%。修改勾选会重置当前模拟。</p>
+    <details class="pool-fold" id="poolFold">
+      <summary><span id="poolFoldTitle">🎛 手动设置船池（国服 / 无国际服账号）</span><span class="chip" id="poolFoldCount">已勾选 0 / 143</span><span class="pool-fold-note" id="poolFoldNote" hidden>已登录 · 以港口为准</span></summary>
+      <div class="pool-fold-body">
+        <p class="hint" id="poolFoldHint" style="margin:8px 0 0">无法登录同步（比如国服玩家）时，在这里勾选你已经拥有的船 — 模拟时按已拥有处理，不会掉落。勾选会自动保存在本机；登录后以港口为准。修改勾选会重置当前模拟。</p>
+        <div class="pool-tools">
+          <input type="search" id="poolSearch" placeholder="搜索船名（中文 / 英文）…">
+          <button class="btn-sec btn-mini" id="poolClearAll" type="button">清空全部</button>
+        </div>
+        <div id="poolGroups"></div>
+        <div style="text-align:right;margin-top:12px"><button class="btn-sec btn-mini" id="poolCollapseBtn" type="button">收起 ▴</button></div>
+      </div>
+    </details>
+  </section>
+
+  <section class="panel">
+    <h2 id="acqTitle">你的舰船 — 0</h2>
+    <div class="remaining">
+      <span class="chip"><span id="remLblRare">稀有剩余</span> <b id="remRare">42 / 42</b></span>
+      <span class="chip"><span id="remLblMid">中级剩余</span> <b id="remMid">53 / 53</b></span>
+      <span class="chip"><span id="remLblCommon">普通剩余</span> <b id="remCommon">48 / 48</b></span>
+    </div>
+    <div id="acquiredPanel"><p class="empty">还没有舰船 — 打开一个补给箱吧。</p></div>
+    <h3 style="margin-top:20px" id="rewardsTitle">奖励</h3>
+    <div class="reward-grid" id="rewardsPanel"></div>
+    <button class="btn-sec" id="btnShare" style="width:100%;margin-top:14px;padding:13px">📸 生成分享图</button>
+    <p class="hint" id="shareHint" style="margin:8px 0 0">把这次战报生成一张带二维码的图片，发到论坛、群里都方便。</p>
+  </section>
+
+  <section class="panel">
+    <h2 style="font-size:16px" id="rollsTitle">开箱记录</h2>
+    <p class="hint" id="lastRoll" style="margin:4px 0 6px">暂无记录。</p>
+    <ul class="log" id="rollLog"></ul>
+  </section>
+
+  <div class="share-overlay" id="shareOverlay" hidden>
+    <div class="share-box">
+      <img id="shareImg" alt="share card"/>
+      <div class="share-btns">
+        <a class="btn-gold" id="shareDownload" download="wows-santa-report.png">⬇ 下载图片</a>
+        <button class="btn-gold" id="shareNative" hidden>分享…</button>
+        <button class="btn-gold-sec" id="shareClose">关闭</button>
+      </div>
+      <p class="hint" id="shareTip" style="color:#c7d3de">手机上也可以长按图片保存或转发。</p>
+    </div>
+  </div>
+
+  <div class="celebrate-banner" id="celebrateBanner"></div>
+  <div class="ship-reveal" id="shipReveal"></div>
+
+  <details class="how">
+    <summary id="howSummary">玩法说明</summary>
+    <ul>
+      <li id="how1">已获得的舰船会离开船池 — 不会重复掉落。</li>
+      <li id="how2">某组舰船抽完后，其概率会转移到其他组；总出船概率不变。</li>
+      <li id="how3">保底按去年规则假设：礼物 100 · 超级 15 · 特级 7 · 金色 10 次无船触发。</li>
+      <li id="how4">金色礼物补给箱从圣诞补给箱中掉落，单独开启。</li>
+      <li id="how5">价格为去年价格 — 15.11 价格尚未公布。</li>
+      <li id="how6">登录后通过 Wargaming 获取你的港口，按确切 ID 匹配舰船；不同版本分别计算。金色舰船不按登录过滤。</li>
+      <li id="how7">概率来自封闭测试 15.11 博客 — 正式上线前可能调整。</li>
+      <li id="how8">集齐金色礼物全部 7 艘船后，金色箱的出船奖励改为战火锻造高级补给箱（每个金色箱 10%；此时金色保底改为第 10 个金色箱必出锻造箱）；锻造箱 50% 出新泽西 BF，第 3 个保底必出，已有时改为 2,500 钢铁。</li>
+    </ul>
+  </details>
+</div>
+
+<script>
+/**
+ * Minified by jsDelivr using Terser v5.37.0.
+ * Original file: /npm/qrcode-generator@1.4.4/qrcode.js
+ *
+ * Do NOT use SRI with dynamically generated files! More information: https://www.jsdelivr.com/using-sri-with-dynamic-files
+ */
+var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],f={},c=function(t,r){o=function(t){for(var r=new Array(t),e=0;e<t;e+=1){r[e]=new Array(t);for(var n=0;n<t;n+=1)r[e][n]=null}return r}(i=4*e+17),l(0,0),l(i-7,0),l(0,i-7),s(),h(),d(t,r),e>=7&&v(t),null==a&&(a=p(e,n,u)),w(a,r)},l=function(t,r){for(var e=-1;e<=7;e+=1)if(!(t+e<=-1||i<=t+e))for(var n=-1;n<=7;n+=1)r+n<=-1||i<=r+n||(o[t+e][r+n]=0<=e&&e<=6&&(0==n||6==n)||0<=n&&n<=6&&(0==e||6==e)||2<=e&&e<=4&&2<=n&&n<=4)},h=function(){for(var t=8;t<i-8;t+=1)null==o[t][6]&&(o[t][6]=t%2==0);for(var r=8;r<i-8;r+=1)null==o[6][r]&&(o[6][r]=r%2==0)},s=function(){for(var t=B.getPatternPosition(e),r=0;r<t.length;r+=1)for(var n=0;n<t.length;n+=1){var i=t[r],a=t[n];if(null==o[i][a])for(var u=-2;u<=2;u+=1)for(var f=-2;f<=2;f+=1)o[i+u][a+f]=-2==u||2==u||-2==f||2==f||0==u&&0==f}},v=function(t){for(var r=B.getBCHTypeNumber(e),n=0;n<18;n+=1){var a=!t&&1==(r>>n&1);o[Math.floor(n/3)][n%3+i-8-3]=a}for(n=0;n<18;n+=1){a=!t&&1==(r>>n&1);o[n%3+i-8-3][Math.floor(n/3)]=a}},d=function(t,r){for(var e=n<<3|r,a=B.getBCHTypeInfo(e),u=0;u<15;u+=1){var f=!t&&1==(a>>u&1);u<6?o[u][8]=f:u<8?o[u+1][8]=f:o[i-15+u][8]=f}for(u=0;u<15;u+=1){f=!t&&1==(a>>u&1);u<8?o[8][i-u-1]=f:u<9?o[8][15-u-1+1]=f:o[8][15-u-1]=f}o[i-8][8]=!t},w=function(t,r){for(var e=-1,n=i-1,a=7,u=0,f=B.getMaskFunction(r),c=i-1;c>0;c-=2)for(6==c&&(c-=1);;){for(var g=0;g<2;g+=1)if(null==o[n][c-g]){var l=!1;u<t.length&&(l=1==(t[u]>>>a&1)),f(n,c-g)&&(l=!l),o[n][c-g]=l,-1==(a-=1)&&(u+=1,a=7)}if((n+=e)<0||i<=n){n-=e,e=-e;break}}},p=function(t,r,e){for(var n=A.getRSBlocks(t,r),o=b(),i=0;i<e.length;i+=1){var a=e[i];o.put(a.getMode(),4),o.put(a.getLength(),B.getLengthInBits(a.getMode(),t)),a.write(o)}var u=0;for(i=0;i<n.length;i+=1)u+=n[i].dataCount;if(o.getLengthInBits()>8*u)throw"code length overflow. ("+o.getLengthInBits()+">"+8*u+")";for(o.getLengthInBits()+4<=8*u&&o.put(0,4);o.getLengthInBits()%8!=0;)o.putBit(!1);for(;!(o.getLengthInBits()>=8*u||(o.put(236,8),o.getLengthInBits()>=8*u));)o.put(17,8);return function(t,r){for(var e=0,n=0,o=0,i=new Array(r.length),a=new Array(r.length),u=0;u<r.length;u+=1){var f=r[u].dataCount,c=r[u].totalCount-f;n=Math.max(n,f),o=Math.max(o,c),i[u]=new Array(f);for(var g=0;g<i[u].length;g+=1)i[u][g]=255&t.getBuffer()[g+e];e+=f;var l=B.getErrorCorrectPolynomial(c),h=k(i[u],l.getLength()-1).mod(l);for(a[u]=new Array(l.getLength()-1),g=0;g<a[u].length;g+=1){var s=g+h.getLength()-a[u].length;a[u][g]=s>=0?h.getAt(s):0}}var v=0;for(g=0;g<r.length;g+=1)v+=r[g].totalCount;var d=new Array(v),w=0;for(g=0;g<n;g+=1)for(u=0;u<r.length;u+=1)g<i[u].length&&(d[w]=i[u][g],w+=1);for(g=0;g<o;g+=1)for(u=0;u<r.length;u+=1)g<a[u].length&&(d[w]=a[u][g],w+=1);return d}(o,n)};f.addData=function(t,r){var e=null;switch(r=r||"Byte"){case"Numeric":e=M(t);break;case"Alphanumeric":e=x(t);break;case"Byte":e=m(t);break;case"Kanji":e=L(t);break;default:throw"mode:"+r}u.push(e),a=null},f.isDark=function(t,r){if(t<0||i<=t||r<0||i<=r)throw t+","+r;return o[t][r]},f.getModuleCount=function(){return i},f.make=function(){if(e<1){for(var t=1;t<40;t++){for(var r=A.getRSBlocks(t,n),o=b(),i=0;i<u.length;i++){var a=u[i];o.put(a.getMode(),4),o.put(a.getLength(),B.getLengthInBits(a.getMode(),t)),a.write(o)}var g=0;for(i=0;i<r.length;i++)g+=r[i].dataCount;if(o.getLengthInBits()<=8*g)break}e=t}c(!1,function(){for(var t=0,r=0,e=0;e<8;e+=1){c(!0,e);var n=B.getLostPoint(f);(0==e||t>n)&&(t=n,r=e)}return r}())},f.createTableTag=function(t,r){t=t||2;var e="";e+='<table style="',e+=" border-width: 0px; border-style: none;",e+=" border-collapse: collapse;",e+=" padding: 0px; margin: "+(r=void 0===r?4*t:r)+"px;",e+='">',e+="<tbody>";for(var n=0;n<f.getModuleCount();n+=1){e+="<tr>";for(var o=0;o<f.getModuleCount();o+=1)e+='<td style="',e+=" border-width: 0px; border-style: none;",e+=" border-collapse: collapse;",e+=" padding: 0px; margin: 0px;",e+=" width: "+t+"px;",e+=" height: "+t+"px;",e+=" background-color: ",e+=f.isDark(n,o)?"#000000":"#ffffff",e+=";",e+='"/>';e+="</tr>"}return e+="</tbody>",e+="</table>"},f.createSvgTag=function(t,r,e,n){var o={};"object"==typeof arguments[0]&&(t=(o=arguments[0]).cellSize,r=o.margin,e=o.alt,n=o.title),t=t||2,r=void 0===r?4*t:r,(e="string"==typeof e?{text:e}:e||{}).text=e.text||null,e.id=e.text?e.id||"qrcode-description":null,(n="string"==typeof n?{text:n}:n||{}).text=n.text||null,n.id=n.text?n.id||"qrcode-title":null;var i,a,u,c,g=f.getModuleCount()*t+2*r,l="";for(c="l"+t+",0 0,"+t+" -"+t+",0 0,-"+t+"z ",l+='<svg version="1.1" xmlns="http://www.w3.org/2000/svg"',l+=o.scalable?"":' width="'+g+'px" height="'+g+'px"',l+=' viewBox="0 0 '+g+" "+g+'" ',l+=' preserveAspectRatio="xMinYMin meet"',l+=n.text||e.text?' role="img" aria-labelledby="'+y([n.id,e.id].join(" ").trim())+'"':"",l+=">",l+=n.text?'<title id="'+y(n.id)+'">'+y(n.text)+"</title>":"",l+=e.text?'<description id="'+y(e.id)+'">'+y(e.text)+"</description>":"",l+='<rect width="100%" height="100%" fill="white" cx="0" cy="0"/>',l+='<path d="',a=0;a<f.getModuleCount();a+=1)for(u=a*t+r,i=0;i<f.getModuleCount();i+=1)f.isDark(a,i)&&(l+="M"+(i*t+r)+","+u+c);return l+='" stroke="transparent" fill="black"/>',l+="</svg>"},f.createDataURL=function(t,r){t=t||2,r=void 0===r?4*t:r;var e=f.getModuleCount()*t+2*r,n=r,o=e-r;return I(e,e,(function(r,e){if(n<=r&&r<o&&n<=e&&e<o){var i=Math.floor((r-n)/t),a=Math.floor((e-n)/t);return f.isDark(a,i)?0:1}return 1}))},f.createImgTag=function(t,r,e){t=t||2,r=void 0===r?4*t:r;var n=f.getModuleCount()*t+2*r,o="";return o+="<img",o+=' src="',o+=f.createDataURL(t,r),o+='"',o+=' width="',o+=n,o+='"',o+=' height="',o+=n,o+='"',e&&(o+=' alt="',o+=y(e),o+='"'),o+="/>"};var y=function(t){for(var r="",e=0;e<t.length;e+=1){var n=t.charAt(e);switch(n){case"<":r+="&lt;";break;case">":r+="&gt;";break;case"&":r+="&amp;";break;case'"':r+="&quot;";break;default:r+=n}}return r};return f.createASCII=function(t,r){if((t=t||1)<2)return function(t){t=void 0===t?2:t;var r,e,n,o,i,a=1*f.getModuleCount()+2*t,u=t,c=a-t,g={"██":"█","█ ":"▀"," █":"▄","  ":" "},l={"██":"▀","█ ":"▀"," █":" ","  ":" "},h="";for(r=0;r<a;r+=2){for(n=Math.floor((r-u)/1),o=Math.floor((r+1-u)/1),e=0;e<a;e+=1)i="█",u<=e&&e<c&&u<=r&&r<c&&f.isDark(n,Math.floor((e-u)/1))&&(i=" "),u<=e&&e<c&&u<=r+1&&r+1<c&&f.isDark(o,Math.floor((e-u)/1))?i+=" ":i+="█",h+=t<1&&r+1>=c?l[i]:g[i];h+="\n"}return a%2&&t>0?h.substring(0,h.length-a-1)+Array(a+1).join("▀"):h.substring(0,h.length-1)}(r);t-=1,r=void 0===r?2*t:r;var e,n,o,i,a=f.getModuleCount()*t+2*r,u=r,c=a-r,g=Array(t+1).join("██"),l=Array(t+1).join("  "),h="",s="";for(e=0;e<a;e+=1){for(o=Math.floor((e-u)/t),s="",n=0;n<a;n+=1)i=1,u<=n&&n<c&&u<=e&&e<c&&f.isDark(o,Math.floor((n-u)/t))&&(i=0),s+=i?g:l;for(o=0;o<t;o+=1)h+=s+"\n"}return h.substring(0,h.length-1)},f.renderTo2dContext=function(t,r){r=r||2;for(var e=f.getModuleCount(),n=0;n<e;n++)for(var o=0;o<e;o++)t.fillStyle=f.isDark(n,o)?"black":"white",t.fillRect(n*r,o*r,r,r)},f};t.stringToBytes=(t.stringToBytesFuncs={default:function(t){for(var r=[],e=0;e<t.length;e+=1){var n=t.charCodeAt(e);r.push(255&n)}return r}}).default,t.createStringToBytes=function(t,r){var e=function(){for(var e=S(t),n=function(){var t=e.read();if(-1==t)throw"eof";return t},o=0,i={};;){var a=e.read();if(-1==a)break;var u=n(),f=n()<<8|n();i[String.fromCharCode(a<<8|u)]=f,o+=1}if(o!=r)throw o+" != "+r;return i}(),n="?".charCodeAt(0);return function(t){for(var r=[],o=0;o<t.length;o+=1){var i=t.charCodeAt(o);if(i<128)r.push(i);else{var a=e[t.charAt(o)];"number"==typeof a?(255&a)==a?r.push(a):(r.push(a>>>8),r.push(255&a)):r.push(n)}}return r}};var r,e,n,o,i,a=1,u=2,f=4,c=8,g={L:1,M:0,Q:3,H:2},l=0,h=1,s=2,v=3,d=4,w=5,p=6,y=7,B=(r=[[],[6,18],[6,22],[6,26],[6,30],[6,34],[6,22,38],[6,24,42],[6,26,46],[6,28,50],[6,30,54],[6,32,58],[6,34,62],[6,26,46,66],[6,26,48,70],[6,26,50,74],[6,30,54,78],[6,30,56,82],[6,30,58,86],[6,34,62,90],[6,28,50,72,94],[6,26,50,74,98],[6,30,54,78,102],[6,28,54,80,106],[6,32,58,84,110],[6,30,58,86,114],[6,34,62,90,118],[6,26,50,74,98,122],[6,30,54,78,102,126],[6,26,52,78,104,130],[6,30,56,82,108,134],[6,34,60,86,112,138],[6,30,58,86,114,142],[6,34,62,90,118,146],[6,30,54,78,102,126,150],[6,24,50,76,102,128,154],[6,28,54,80,106,132,158],[6,32,58,84,110,136,162],[6,26,54,82,110,138,166],[6,30,58,86,114,142,170]],e=1335,n=7973,i=function(t){for(var r=0;0!=t;)r+=1,t>>>=1;return r},(o={}).getBCHTypeInfo=function(t){for(var r=t<<10;i(r)-i(e)>=0;)r^=e<<i(r)-i(e);return 21522^(t<<10|r)},o.getBCHTypeNumber=function(t){for(var r=t<<12;i(r)-i(n)>=0;)r^=n<<i(r)-i(n);return t<<12|r},o.getPatternPosition=function(t){return r[t-1]},o.getMaskFunction=function(t){switch(t){case l:return function(t,r){return(t+r)%2==0};case h:return function(t,r){return t%2==0};case s:return function(t,r){return r%3==0};case v:return function(t,r){return(t+r)%3==0};case d:return function(t,r){return(Math.floor(t/2)+Math.floor(r/3))%2==0};case w:return function(t,r){return t*r%2+t*r%3==0};case p:return function(t,r){return(t*r%2+t*r%3)%2==0};case y:return function(t,r){return(t*r%3+(t+r)%2)%2==0};default:throw"bad maskPattern:"+t}},o.getErrorCorrectPolynomial=function(t){for(var r=k([1],0),e=0;e<t;e+=1)r=r.multiply(k([1,C.gexp(e)],0));return r},o.getLengthInBits=function(t,r){if(1<=r&&r<10)switch(t){case a:return 10;case u:return 9;case f:case c:return 8;default:throw"mode:"+t}else if(r<27)switch(t){case a:return 12;case u:return 11;case f:return 16;case c:return 10;default:throw"mode:"+t}else{if(!(r<41))throw"type:"+r;switch(t){case a:return 14;case u:return 13;case f:return 16;case c:return 12;default:throw"mode:"+t}}},o.getLostPoint=function(t){for(var r=t.getModuleCount(),e=0,n=0;n<r;n+=1)for(var o=0;o<r;o+=1){for(var i=0,a=t.isDark(n,o),u=-1;u<=1;u+=1)if(!(n+u<0||r<=n+u))for(var f=-1;f<=1;f+=1)o+f<0||r<=o+f||0==u&&0==f||a==t.isDark(n+u,o+f)&&(i+=1);i>5&&(e+=3+i-5)}for(n=0;n<r-1;n+=1)for(o=0;o<r-1;o+=1){var c=0;t.isDark(n,o)&&(c+=1),t.isDark(n+1,o)&&(c+=1),t.isDark(n,o+1)&&(c+=1),t.isDark(n+1,o+1)&&(c+=1),0!=c&&4!=c||(e+=3)}for(n=0;n<r;n+=1)for(o=0;o<r-6;o+=1)t.isDark(n,o)&&!t.isDark(n,o+1)&&t.isDark(n,o+2)&&t.isDark(n,o+3)&&t.isDark(n,o+4)&&!t.isDark(n,o+5)&&t.isDark(n,o+6)&&(e+=40);for(o=0;o<r;o+=1)for(n=0;n<r-6;n+=1)t.isDark(n,o)&&!t.isDark(n+1,o)&&t.isDark(n+2,o)&&t.isDark(n+3,o)&&t.isDark(n+4,o)&&!t.isDark(n+5,o)&&t.isDark(n+6,o)&&(e+=40);var g=0;for(o=0;o<r;o+=1)for(n=0;n<r;n+=1)t.isDark(n,o)&&(g+=1);return e+=Math.abs(100*g/r/r-50)/5*10},o),C=function(){for(var t=new Array(256),r=new Array(256),e=0;e<8;e+=1)t[e]=1<<e;for(e=8;e<256;e+=1)t[e]=t[e-4]^t[e-5]^t[e-6]^t[e-8];for(e=0;e<255;e+=1)r[t[e]]=e;var n={glog:function(t){if(t<1)throw"glog("+t+")";return r[t]},gexp:function(r){for(;r<0;)r+=255;for(;r>=256;)r-=255;return t[r]}};return n}();function k(t,r){if(void 0===t.length)throw t.length+"/"+r;var e=function(){for(var e=0;e<t.length&&0==t[e];)e+=1;for(var n=new Array(t.length-e+r),o=0;o<t.length-e;o+=1)n[o]=t[o+e];return n}(),n={getAt:function(t){return e[t]},getLength:function(){return e.length},multiply:function(t){for(var r=new Array(n.getLength()+t.getLength()-1),e=0;e<n.getLength();e+=1)for(var o=0;o<t.getLength();o+=1)r[e+o]^=C.gexp(C.glog(n.getAt(e))+C.glog(t.getAt(o)));return k(r,0)},mod:function(t){if(n.getLength()-t.getLength()<0)return n;for(var r=C.glog(n.getAt(0))-C.glog(t.getAt(0)),e=new Array(n.getLength()),o=0;o<n.getLength();o+=1)e[o]=n.getAt(o);for(o=0;o<t.getLength();o+=1)e[o]^=C.gexp(C.glog(t.getAt(o))+r);return k(e,0).mod(t)}};return n}var A=function(){var t=[[1,26,19],[1,26,16],[1,26,13],[1,26,9],[1,44,34],[1,44,28],[1,44,22],[1,44,16],[1,70,55],[1,70,44],[2,35,17],[2,35,13],[1,100,80],[2,50,32],[2,50,24],[4,25,9],[1,134,108],[2,67,43],[2,33,15,2,34,16],[2,33,11,2,34,12],[2,86,68],[4,43,27],[4,43,19],[4,43,15],[2,98,78],[4,49,31],[2,32,14,4,33,15],[4,39,13,1,40,14],[2,121,97],[2,60,38,2,61,39],[4,40,18,2,41,19],[4,40,14,2,41,15],[2,146,116],[3,58,36,2,59,37],[4,36,16,4,37,17],[4,36,12,4,37,13],[2,86,68,2,87,69],[4,69,43,1,70,44],[6,43,19,2,44,20],[6,43,15,2,44,16],[4,101,81],[1,80,50,4,81,51],[4,50,22,4,51,23],[3,36,12,8,37,13],[2,116,92,2,117,93],[6,58,36,2,59,37],[4,46,20,6,47,21],[7,42,14,4,43,15],[4,133,107],[8,59,37,1,60,38],[8,44,20,4,45,21],[12,33,11,4,34,12],[3,145,115,1,146,116],[4,64,40,5,65,41],[11,36,16,5,37,17],[11,36,12,5,37,13],[5,109,87,1,110,88],[5,65,41,5,66,42],[5,54,24,7,55,25],[11,36,12,7,37,13],[5,122,98,1,123,99],[7,73,45,3,74,46],[15,43,19,2,44,20],[3,45,15,13,46,16],[1,135,107,5,136,108],[10,74,46,1,75,47],[1,50,22,15,51,23],[2,42,14,17,43,15],[5,150,120,1,151,121],[9,69,43,4,70,44],[17,50,22,1,51,23],[2,42,14,19,43,15],[3,141,113,4,142,114],[3,70,44,11,71,45],[17,47,21,4,48,22],[9,39,13,16,40,14],[3,135,107,5,136,108],[3,67,41,13,68,42],[15,54,24,5,55,25],[15,43,15,10,44,16],[4,144,116,4,145,117],[17,68,42],[17,50,22,6,51,23],[19,46,16,6,47,17],[2,139,111,7,140,112],[17,74,46],[7,54,24,16,55,25],[34,37,13],[4,151,121,5,152,122],[4,75,47,14,76,48],[11,54,24,14,55,25],[16,45,15,14,46,16],[6,147,117,4,148,118],[6,73,45,14,74,46],[11,54,24,16,55,25],[30,46,16,2,47,17],[8,132,106,4,133,107],[8,75,47,13,76,48],[7,54,24,22,55,25],[22,45,15,13,46,16],[10,142,114,2,143,115],[19,74,46,4,75,47],[28,50,22,6,51,23],[33,46,16,4,47,17],[8,152,122,4,153,123],[22,73,45,3,74,46],[8,53,23,26,54,24],[12,45,15,28,46,16],[3,147,117,10,148,118],[3,73,45,23,74,46],[4,54,24,31,55,25],[11,45,15,31,46,16],[7,146,116,7,147,117],[21,73,45,7,74,46],[1,53,23,37,54,24],[19,45,15,26,46,16],[5,145,115,10,146,116],[19,75,47,10,76,48],[15,54,24,25,55,25],[23,45,15,25,46,16],[13,145,115,3,146,116],[2,74,46,29,75,47],[42,54,24,1,55,25],[23,45,15,28,46,16],[17,145,115],[10,74,46,23,75,47],[10,54,24,35,55,25],[19,45,15,35,46,16],[17,145,115,1,146,116],[14,74,46,21,75,47],[29,54,24,19,55,25],[11,45,15,46,46,16],[13,145,115,6,146,116],[14,74,46,23,75,47],[44,54,24,7,55,25],[59,46,16,1,47,17],[12,151,121,7,152,122],[12,75,47,26,76,48],[39,54,24,14,55,25],[22,45,15,41,46,16],[6,151,121,14,152,122],[6,75,47,34,76,48],[46,54,24,10,55,25],[2,45,15,64,46,16],[17,152,122,4,153,123],[29,74,46,14,75,47],[49,54,24,10,55,25],[24,45,15,46,46,16],[4,152,122,18,153,123],[13,74,46,32,75,47],[48,54,24,14,55,25],[42,45,15,32,46,16],[20,147,117,4,148,118],[40,75,47,7,76,48],[43,54,24,22,55,25],[10,45,15,67,46,16],[19,148,118,6,149,119],[18,75,47,31,76,48],[34,54,24,34,55,25],[20,45,15,61,46,16]],r=function(t,r){var e={};return e.totalCount=t,e.dataCount=r,e},e={};return e.getRSBlocks=function(e,n){var o=function(r,e){switch(e){case g.L:return t[4*(r-1)+0];case g.M:return t[4*(r-1)+1];case g.Q:return t[4*(r-1)+2];case g.H:return t[4*(r-1)+3];default:return}}(e,n);if(void 0===o)throw"bad rs block @ typeNumber:"+e+"/errorCorrectionLevel:"+n;for(var i=o.length/3,a=[],u=0;u<i;u+=1)for(var f=o[3*u+0],c=o[3*u+1],l=o[3*u+2],h=0;h<f;h+=1)a.push(r(c,l));return a},e}(),b=function(){var t=[],r=0,e={getBuffer:function(){return t},getAt:function(r){var e=Math.floor(r/8);return 1==(t[e]>>>7-r%8&1)},put:function(t,r){for(var n=0;n<r;n+=1)e.putBit(1==(t>>>r-n-1&1))},getLengthInBits:function(){return r},putBit:function(e){var n=Math.floor(r/8);t.length<=n&&t.push(0),e&&(t[n]|=128>>>r%8),r+=1}};return e},M=function(t){var r=a,e=t,n={getMode:function(){return r},getLength:function(t){return e.length},write:function(t){for(var r=e,n=0;n+2<r.length;)t.put(o(r.substring(n,n+3)),10),n+=3;n<r.length&&(r.length-n==1?t.put(o(r.substring(n,n+1)),4):r.length-n==2&&t.put(o(r.substring(n,n+2)),7))}},o=function(t){for(var r=0,e=0;e<t.length;e+=1)r=10*r+i(t.charAt(e));return r},i=function(t){if("0"<=t&&t<="9")return t.charCodeAt(0)-"0".charCodeAt(0);throw"illegal char :"+t};return n},x=function(t){var r=u,e=t,n={getMode:function(){return r},getLength:function(t){return e.length},write:function(t){for(var r=e,n=0;n+1<r.length;)t.put(45*o(r.charAt(n))+o(r.charAt(n+1)),11),n+=2;n<r.length&&t.put(o(r.charAt(n)),6)}},o=function(t){if("0"<=t&&t<="9")return t.charCodeAt(0)-"0".charCodeAt(0);if("A"<=t&&t<="Z")return t.charCodeAt(0)-"A".charCodeAt(0)+10;switch(t){case" ":return 36;case"$":return 37;case"%":return 38;case"*":return 39;case"+":return 40;case"-":return 41;case".":return 42;case"/":return 43;case":":return 44;default:throw"illegal char :"+t}};return n},m=function(r){var e=f,n=t.stringToBytes(r),o={getMode:function(){return e},getLength:function(t){return n.length},write:function(t){for(var r=0;r<n.length;r+=1)t.put(n[r],8)}};return o},L=function(r){var e=c,n=t.stringToBytesFuncs.SJIS;if(!n)throw"sjis not supported.";!function(){var t=n("友");if(2!=t.length||38726!=(t[0]<<8|t[1]))throw"sjis not supported."}();var o=n(r),i={getMode:function(){return e},getLength:function(t){return~~(o.length/2)},write:function(t){for(var r=o,e=0;e+1<r.length;){var n=(255&r[e])<<8|255&r[e+1];if(33088<=n&&n<=40956)n-=33088;else{if(!(57408<=n&&n<=60351))throw"illegal char at "+(e+1)+"/"+n;n-=49472}n=192*(n>>>8&255)+(255&n),t.put(n,13),e+=2}if(e<r.length)throw"illegal char at "+(e+1)}};return i},D=function(){var t=[],r={writeByte:function(r){t.push(255&r)},writeShort:function(t){r.writeByte(t),r.writeByte(t>>>8)},writeBytes:function(t,e,n){e=e||0,n=n||t.length;for(var o=0;o<n;o+=1)r.writeByte(t[o+e])},writeString:function(t){for(var e=0;e<t.length;e+=1)r.writeByte(t.charCodeAt(e))},toByteArray:function(){return t},toString:function(){var r="";r+="[";for(var e=0;e<t.length;e+=1)e>0&&(r+=","),r+=t[e];return r+="]"}};return r},S=function(t){var r=t,e=0,n=0,o=0,i={read:function(){for(;o<8;){if(e>=r.length){if(0==o)return-1;throw"unexpected end of file./"+o}var t=r.charAt(e);if(e+=1,"="==t)return o=0,-1;t.match(/^\s$/)||(n=n<<6|a(t.charCodeAt(0)),o+=6)}var i=n>>>o-8&255;return o-=8,i}},a=function(t){if(65<=t&&t<=90)return t-65;if(97<=t&&t<=122)return t-97+26;if(48<=t&&t<=57)return t-48+52;if(43==t)return 62;if(47==t)return 63;throw"c:"+t};return i},I=function(t,r,e){for(var n=function(t,r){var e=t,n=r,o=new Array(t*r),i={setPixel:function(t,r,n){o[r*e+t]=n},write:function(t){t.writeString("GIF87a"),t.writeShort(e),t.writeShort(n),t.writeByte(128),t.writeByte(0),t.writeByte(0),t.writeByte(0),t.writeByte(0),t.writeByte(0),t.writeByte(255),t.writeByte(255),t.writeByte(255),t.writeString(","),t.writeShort(0),t.writeShort(0),t.writeShort(e),t.writeShort(n),t.writeByte(0);var r=a(2);t.writeByte(2);for(var o=0;r.length-o>255;)t.writeByte(255),t.writeBytes(r,o,255),o+=255;t.writeByte(r.length-o),t.writeBytes(r,o,r.length-o),t.writeByte(0),t.writeString(";")}},a=function(t){for(var r=1<<t,e=1+(1<<t),n=t+1,i=u(),a=0;a<r;a+=1)i.add(String.fromCharCode(a));i.add(String.fromCharCode(r)),i.add(String.fromCharCode(e));var f,c,g,l=D(),h=(f=l,c=0,g=0,{write:function(t,r){if(t>>>r!=0)throw"length over";for(;c+r>=8;)f.writeByte(255&(t<<c|g)),r-=8-c,t>>>=8-c,g=0,c=0;g|=t<<c,c+=r},flush:function(){c>0&&f.writeByte(g)}});h.write(r,n);var s=0,v=String.fromCharCode(o[s]);for(s+=1;s<o.length;){var d=String.fromCharCode(o[s]);s+=1,i.contains(v+d)?v+=d:(h.write(i.indexOf(v),n),i.size()<4095&&(i.size()==1<<n&&(n+=1),i.add(v+d)),v=d)}return h.write(i.indexOf(v),n),h.write(e,n),h.flush(),l.toByteArray()},u=function(){var t={},r=0,e={add:function(n){if(e.contains(n))throw"dup key:"+n;t[n]=r,r+=1},size:function(){return r},indexOf:function(r){return t[r]},contains:function(r){return void 0!==t[r]}};return e};return i}(t,r),o=0;o<r;o+=1)for(var i=0;i<t;i+=1)n.setPixel(i,o,e(i,o));var a=D();n.write(a);for(var u=function(){var t=0,r=0,e=0,n="",o={},i=function(t){n+=String.fromCharCode(a(63&t))},a=function(t){if(t<0);else{if(t<26)return 65+t;if(t<52)return t-26+97;if(t<62)return t-52+48;if(62==t)return 43;if(63==t)return 47}throw"n:"+t};return o.writeByte=function(n){for(t=t<<8|255&n,r+=8,e+=1;r>=6;)i(t>>>r-6),r-=6},o.flush=function(){if(r>0&&(i(t<<6-r),t=0,r=0),e%3!=0)for(var o=3-e%3,a=0;a<o;a+=1)n+="="},o.toString=function(){return n},o}(),f=a.toByteArray(),c=0;c<f.length;c+=1)u.writeByte(f[c]);return u.flush(),"data:image/gif;base64,"+u};return t}();qrcode.stringToBytesFuncs["UTF-8"]=function(t){return function(t){for(var r=[],e=0;e<t.length;e++){var n=t.charCodeAt(e);n<128?r.push(n):n<2048?r.push(192|n>>6,128|63&n):n<55296||n>=57344?r.push(224|n>>12,128|n>>6&63,128|63&n):(e++,n=65536+((1023&n)<<10|1023&t.charCodeAt(e)),r.push(240|n>>18,128|n>>12&63,128|n>>6&63,128|63&n))}return r}(t)},function(t){"function"==typeof define&&define.amd?define([],t):"object"==typeof exports&&(module.exports=t())}((function(){return qrcode}));
+//# sourceMappingURL=/sm/26b4b0d0b1e283d6b3ec9857ac597d7a60c76ac17be1ef4c965f03086de426bb.map
+</script>
+<script>
+var APP_ID='9b7a0d1a35b96b31652ee253b3d7b062';
+var LS_KEY='wowsSantaSim:user';
+/* ---------- i18n: default zh, persisted, pure text layer ---------- */
+var LANG_KEY='wowsSantaSim:lang:en';
+var LANG='en';
+try{ var _sl=localStorage.getItem(LANG_KEY); if(_sl==='en'||_sl==='zh') LANG=_sl; }catch(e){}
+function L(en,zh){ return LANG==='zh'? zh : en; }
+function TX(en,zh){ return {en:en, zh:zh}; }
+function txt(o){ if(o==null) return ''; if(typeof o==='string') return o; return o[LANG]||o.en||''; }
+function grpLabel(g){ var m={rare:['Rare','稀有'],mid:['Mid','中级'],common:['Common','普通'],golden:['Golden Gift','金色礼物补给箱'],legacy:['Golden / Legacy','金色 / 经典'],bf:['Battle Forged','战火锻造']}; var p=m[g]; return p? L(p[0],p[1]) : g; }
+function typeLabel(t){ return LANG==='zh'? (t.labelZh||t.label) : t.label; }
+function typeShort(t){ return LANG==='zh'? (t.shortZh||t.short) : t.short; }
+var COAL_NAMES={'Marco Polo':1,'Z-44':1,'Tulsa':1};
+/* Chinese community-standard ship names (社区通用译名), keyed by ship_id */
+var SHIP_ZH={
+3760076208:'阿尔瓦罗·德·巴赞',3550394160:'希尔德布兰德',3760142288:'雷霆者',3655251952:'波多黎各',3761190896:'密苏里',3751753168:'列宁',3751687888:'朝潮',3762206160:'米哈伊尔·库图佐夫',4293801424:'轰鸣',4268635856:'神风',3765384944:'尤利乌斯·凯撒',3760075984:'吕顺',3655218480:'斯莫兰',3550360912:'拉潘帕',3655251408:'斯摩棱斯克',3549869840:'托宁',4273911760:'蒙茅斯',3539941360:'罗德岛',3539941104:'孔特·维尔德',3550361296:'冬月',3550393680:'伊里萨尔上将',3761157584:'喀琅施塔得',3750704848:'肥前',3761190608:'武藏',3751753552:'让·巴尔',3761125360:'贝纳姆',3540923696:"闪电'52",3530504176:'佐治亚',3540989936:'印第安纳',3762239280:'奥丁',3741300688:'巨像',3751720944:'安克雷奇',3751753712:'马萨诸塞',3751786480:'企业',3762173744:'Z-39',3763255248:'贝尔法斯特',3752802256:'纳尔逊',3764270896:'T-61',3764303664:'施佩伯爵',3764369200:'埃里希·洛温哈特',4267587280:'神风R',4277024464:'风神',
+3740218576:'孙逸仙',3540956624:'库兹马·米宁',3540956912:'费兰特·贡扎加',3761125136:'格罗宁根',3656333264:'猩红雷霆',3750639600:'哈尔福德',3762206032:'格劳上将',3541972432:'敏捷',3741267408:'博罗季诺',3762271984:'阿奎拉',3531519792:'威斯巴登',3741234992:'席尔',3541972944:'爱斯基摩',3730749392:'汉普郡',3762206672:'柴郡',3762272208:'不挠',3730782192:'星座',3761157328:'大连',3761124656:'维洛斯',3540989360:'维多利亚',3761190352:'纳瓦林',3540924112:'峰云',3519985360:'铃谷',3719247568:'剑',3750704880:'朱塞佩·威尔第',3761190640:'马可·波罗',3750639408:'Z-44',3540957136:'阿伯丁',3540957168:'剑桥',3750672368:'塔尔萨',3530470608:'包头',3530471408:'沃思堡',3551409520:'卡尤加',3551475120:'凯旋',3540989744:'弗里德里希·卡尔',3542004944:'纳莱',3762173232:'飓风',3542037808:'图尔古特·雷伊斯',3542005040:'卡罗尔一世',3552490832:'阿吉雷',3762206128:'努曼西亚',3761681872:'S-189',3730748880:'彼得·巴格拉季翁',3741234640:'奥恰科夫',3531486928:'时雨',4276008656:'利根',3542038256:'马尔坎托尼奥·科隆纳',3751687984:'Z-35',3541972816:'奥什',3730782032:'佛兰德',3761682384:'联盟',3751720912:"虎'59",3552524240:'威尔士亲王',
+3720296272:'皮卡第',3542071248:'忒修斯',3763254608:'七月九日',3763287408:'育空',3752736208:"塔什干'39",3763221968:'列宁格勒',3543086544:'阿尔汉格尔斯克',3762238928:'波尔塔瓦',3763222224:'夕立',3752769232:'摩耶',3763254992:'十胜',3752802000:'日向',3763287760:'爱鹰',3763222256:'FR25',3658397424:'戈里齐亚',3752769264:'弗朗切斯科·费鲁乔',3763255024:'阿布鲁齐公爵',3752769328:'魏玛',3763255088:'慕尼黑',3763287856:'沙恩霍斯特',3763255120:'土伦',3763287888:'斯特拉斯堡',3543021520:"朱庇特'42",3522115536:'皇家君主',3543087056:'罗德尼',3731830736:'科林伍德',3763288016:'胡德',3668883440:'博伊西',3763255280:'印第安纳波利斯',4288591856:'亚特兰大',3553572848:'加利福尼亚',3752802288:'佛罗里达',3543577808:"新中国'14",3764303152:'埃利',3764270416:'茹鲁阿',3753817456:'迈索尔',3659445712:'马卡罗夫上将',3743364816:'伊势',3764336336:'陆奥',3764369232:'贝亚恩',3544102864:"猎户座'44",3764271088:'莫纳汉',3765384528:'里约热内卢',3765319120:'猎人',3765351888:'红色克里米亚',3765352400:'埃克塞特',3765319664:'希尔',4264441840:'西姆斯'
+};
+var GOLDEN_ZH={'Latouche-Tréville':'拉图什·特雷维尔','Rodina':'祖国','Tōgasa':'托加萨','Rodina G':'祖国 G','Tōgasa G':'托加萨 G','Somers G':'索默斯 G','Tywysog Cymru':'威尔士亲王（威尔士语）','New Jersey BF':'新泽西 BF'};
+function shipZhName(s){ if(!s) return ''; if(s.zh) return s.zh; if(s.ship_id && SHIP_ZH[s.ship_id]) return SHIP_ZH[s.ship_id]; if(s.name && GOLDEN_ZH[s.name]) return GOLDEN_ZH[s.name]; return s.name||''; }
+function shipDisplayHtml(s){ if(!s) return ''; var en=s.name||''; if(LANG!=='zh') return escapeHtml(en); var zh=shipZhName(s); if(!zh||zh===en) return escapeHtml(en); return escapeHtml(zh)+' <small class="ship-en-sub">'+escapeHtml(en)+'</small>'; }
+/* Full 15.11 Santa pool — [name, tier, ship_id] */
+var FULL_RARE=[
+["Álvaro de Bazán",10,3760076208],["Hildebrand",10,3550394160],["Thunderer",10,3760142288],["Puerto Rico",10,3655251952],["Missouri",9,3761190896],["Lenin",8,3751753168],["Asashio",8,3751687888],["Mikhail Kutuzov",8,3762206160],["Gremyashchy",5,4293801424],["Kamikaze",5,4268635856],["Giulio Cesare",5,3765384944],["Lüshun",10,3760075984],["Småland",10,3655218480],["La Pampa",10,3550360912],["Smolensk",10,3655251408],["Tonijn",10,3549869840],["Monmouth",10,4273911760],["Rhode Island",10,3539941360],["Conte Verde",10,3539941104],["Fuyutsuki",10,3550361296],["Almirante Irízar",10,3550393680],["Kronshtadt",9,3761157584],["Hizen",9,3750704848],["Musashi",9,3761190608],["Jean Bart",9,3751753552],["Benham",9,3761125360],["Błyskawica '52",9,3540923696],["Georgia",9,3530504176],["Indiana",9,3540989936],["Odin",8,3762239280],["Colossus",8,3741300688],["Anchorage",8,3751720944],["Massachusetts",8,3751753712],["Enterprise",8,3751786480],["Z-39",7,3762173744],["Belfast",7,3763255248],["Nelson",7,3752802256],["T-61",6,3764270896],["Admiral Graf Spee",6,3764303664],["Erich Loewenhardt",6,3764369200],["Kamikaze R",5,4267587280],["Fūjin",5,4277024464]
+];
+var FULL_MID=[
+["Sun Yat-Sen",9,3740218576],["Kozma Minin",9,3540956624],["Ferrante Gonzaga",9,3540956912],["Groningen",9,3761125136],["Scarlet Thunder",9,3656333264],["Halford",9,3750639600],["Almirante Grau",8,3762206032],["Provorny",8,3541972432],["Borodino",8,3741267408],["Aquila",8,3762271984],["Wiesbaden",8,3531519792],["Schill",8,3741234992],["Eskimo",8,3541972944],["Hampshire",8,3730749392],["Cheshire",8,3762206672],["Indomitable",8,3762272208],["Constellation",8,3730782192],["Dalian",9,3761157328],["Velos",9,3761124656],["Victoria",9,3540989360],["Navarin",9,3761190352],["Minegumo",9,3540924112],["Suzuya",9,3519985360],["Tsurugi",9,3719247568],["Giuseppe Verdi",9,3750704880],["Marco Polo",9,3761190640],["Z-44",9,3750639408],["Aberdeen",9,3540957136],["Cambridge",9,3540957168],["Tulsa",9,3750672368],["Baotou",9,3530470608],["Fort Worth",9,3530471408],["Cayuga",9,3551409520],["Triunfante",9,3551475120],["Friedrich Carl",9,3540989744],["Narai",8,3542004944],["Orkan",8,3762173232],["Turgut Reis",8,3542037808],["Regele Carol I",8,3542005040],["Comandante Aguirre",8,3552490832],["Numancia",8,3762206128],["S-189",8,3761681872],["Pyotr Bagration",8,3730748880],["Ochakov",8,3741234640],["Shigure",8,3531486928],["Tone",8,4276008656],["Marcantonio Colonna",8,3542038256],["Z-35",8,3751687984],["Hoche",8,3541972816],["Flandre",8,3730782032],["Alliance",8,3761682384],["Tiger '59",8,3751720912],["Prince of Wales",8,3552524240]
+];
+var FULL_COMMON=[
+["Picardie",8,3720296272],["Theseus",8,3542071248],["Nueve de Julio",7,3763254608],["Yukon",7,3763287408],["Tashkent '39",7,3752736208],["Leningrad",7,3763221968],["Arkhangelsk",7,3543086544],["Poltava",7,3762238928],["Yūdachi",7,3763222224],["Maya",7,3752769232],["Tokachi",7,3763254992],["Hyūga",7,3752802000],["Ashitaka",7,3763287760],["FR25",7,3763222256],["Gorizia",7,3658397424],["Francesco Ferruccio",7,3752769264],["Duca degli Abruzzi",7,3763255024],["Weimar",7,3752769328],["München",7,3763255088],["Scharnhorst",7,3763287856],["Toulon",7,3763255120],["Strasbourg",7,3763287888],["Jupiter '42",7,3543021520],["Royal Sovereign",7,3522115536],["Rodney",7,3543087056],["Collingwood",7,3731830736],["Hood",7,3763288016],["Boise",7,3668883440],["Indianapolis",7,3763255280],["Atlanta",7,4288591856],["California",7,3553572848],["Florida",7,3752802288],["Xin Zhong Guo '14",6,3543577808],["Elli",6,3764303152],["Juruá",6,3764270416],["Mysore",6,3753817456],["Admiral Makarov",6,3659445712],["Ise",6,3743364816],["Mutsu",6,3764336336],["Béarn",6,3764369232],["Orion '44",6,3544102864],["Monaghan",6,3764271088],["Rio de Janeiro",5,3765384528],["Okhotnik",5,3765319120],["Krasny Krym",5,3765351888],["Exeter",5,3765352400],["Hill",5,3765319664],["Sims",7,4264441840]
+];
+var RARE=FULL_RARE, MID=FULL_MID, COMMON=FULL_COMMON;
+/* Login / port state */
+var currentUser=null;
+var portIdSet=null;
+var portTotalCount=0;
+var ownedInPoolCount=0;
+var loginLoading=false;
+function realmLabel(r){ return r==='eu'? L('EU','欧洲') : (r==='asia'? L('ASIA','亚洲') : L('NA','北美')); }
+function isOwned(shipId){ if(portIdSet) return !!portIdSet[String(shipId)]; return !!manualOwn[String(shipId)]; }
+function computePoolCounts(){
+  var r=FULL_RARE.filter(function(s){return !isOwned(s[2])}).length;
+  var m=FULL_MID.filter(function(s){return !isOwned(s[2])}).length;
+  var c=FULL_COMMON.filter(function(s){return !isOwned(s[2])}).length;
+  return {rare:r,mid:m,common:c,total:r+m+c};
+}
+function renderStateChips(){
+  var el=document.getElementById('stateChips'); if(!el) return;
+  var counts=computePoolCounts();
+  el.innerHTML='<span class="chip gold"><b>'+counts.total+L(' ships can drop',' 艘船可掉落')+'</b></span>'
+    +'<span class="chip">'+grpLabel('rare')+' <b>'+counts.rare+'</b></span><span class="chip">'+grpLabel('mid')+' <b>'+counts.mid+'</b></span><span class="chip">'+grpLabel('common')+' <b>'+counts.common+'</b></span>'
+    +(currentUser?'<span class="chip"><b>'+fmtNum(portTotalCount)+'</b>'+L(' in port',' 港内舰船')+'</span>':'');
+}
+function escapeHtml(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(ch){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]}); }
+function showLoginError(msg){
+  var e=document.getElementById('loginError'); if(!e) return;
+  if(msg){ e.hidden=false; e.textContent=txt(msg); } else { e.hidden=true; e.textContent=''; }
+}
+function renderLoginPanel(){
+  var out=document.getElementById('loginLoggedOut'), inn=document.getElementById('loginLoggedIn');
+  var hint=document.getElementById('loginHint');
+  var paste=document.getElementById('loginPasteRow');
+  if(!out||!inn) return;
+  if(hint) hint.hidden=!!currentUser;
+  if(paste) paste.hidden=!!currentUser;
+  if(currentUser){
+    out.hidden=true; inn.hidden=false;
+    var counts=computePoolCounts();
+    var t=document.getElementById('loginUserTitle'); if(t) t.textContent=currentUser.nickname+' · '+realmLabel(currentUser.realm);
+    var d=document.getElementById('loginUserDetail'); if(d) d.textContent='';
+    var s=document.getElementById('loginStatusIn'); if(s) s.textContent=loginLoading? L('Loading…','加载中…') : '';
+  } else {
+    out.hidden=false; inn.hidden=true;
+    var s2=document.getElementById('loginStatus'); if(s2) s2.textContent=loginLoading? L('Loading…','加载中…') : '';
+  }
+  if(typeof syncManualAvailability==='function') syncManualAvailability();
+}
+function saveUser(u){ try{ localStorage.setItem(LS_KEY, JSON.stringify(u)); }catch(e){} }
+function loadSavedUser(){ try{ var raw=localStorage.getItem(LS_KEY); if(!raw) return null; var u=JSON.parse(raw); if(!u||!u.access_token||!u.account_id||!u.realm) return null; if(u.expires_at && Number(u.expires_at) <= Math.floor(Date.now()/1000)) return null; return u; }catch(e){ return null; } }
+function clearSavedUser(){ try{ localStorage.removeItem(LS_KEY); }catch(e){} }
+function doLogin(realm){
+  var expiresAt=Math.floor(Date.now()/1000)+86400;
+  var redirectUri=window.location.origin+window.location.pathname+'?realm='+realm;
+  var authUrl='https://api.worldoftanks.'+realm+'/wot/auth/login/?application_id='+APP_ID+'&expires_at='+expiresAt+'&redirect_uri='+redirectUri;
+  window.location.href=authUrl;
+}
+function doLogout(){
+  clearSavedUser(); currentUser=null; portIdSet=null; portTotalCount=0; ownedInPoolCount=0; loginLoading=false;
+  showLoginError(''); renderLoginPanel(); renderStateChips(); resetSession();
+}
+/* Shared auth completion: used by the on-load callback parser and the paste-back bridge. */
+function userFromAuthParams(params){
+  if(!params) return null;
+  if(params.get('status')!=='ok' || !params.get('access_token') || !params.get('account_id')) return null;
+  return {realm:params.get('realm')||'com', access_token:params.get('access_token'), account_id:params.get('account_id'), nickname:params.get('nickname')||'', expires_at:Number(params.get('expires_at')||0)};
+}
+function handleAuthParams(params){
+  var u=userFromAuthParams(params);
+  if(!u) return false;
+  saveUser(u);
+  fetchPortAndPersonalize(u);
+  return true;
+}
+function parseCallback(){
+  try{
+    var params=new URLSearchParams(window.location.search);
+    var fromTop=false;
+    if(params.get('status')!=='ok'){
+      try{
+        if(window.top && window.top!==window.self){
+          var topParams=new URLSearchParams(window.top.location.search);
+          if(topParams.get('status')){
+            params=topParams;
+            fromTop=true;
+          }
+        }
+      }catch(e){}
+    }
+    function stripCallbackParams(){
+      try{ history.replaceState(null,'',window.location.origin+window.location.pathname); }catch(e){}
+      if(fromTop){
+        try{ window.top.history.replaceState(null,'',window.top.location.origin+window.top.location.pathname); }catch(e){}
+      }
+    }
+    if(userFromAuthParams(params)){
+      /* Strip credentials from the address bar immediately */
+      stripCallbackParams();
+      return handleAuthParams(params);
+    }
+    if(params.get('status') && params.get('status')!=='ok'){
+      stripCallbackParams();
+      showLoginError(TX('Login didn\'t complete — playing with the full pool.','登录未完成 — 使用完整船池游玩。'));
+    }
+  }catch(e){}
+  return false;
+}
+function handlePastedLink(){
+  var inp=document.getElementById('pasteLink');
+  var raw=inp? (inp.value||'').trim() : '';
+  var params=null;
+  if(raw){
+    try{ params=new URL(raw).searchParams; }catch(e){ params=null; }
+    if(!params || !params.get('status')){
+      var q=raw;
+      var qi=q.indexOf('?'); if(qi>=0) q=q.substring(qi+1);
+      var hi=q.indexOf('#'); if(hi>=0) q=q.substring(0,hi);
+      try{ params=new URLSearchParams(q); }catch(e){ params=null; }
+    }
+  }
+  if(params && handleAuthParams(params)){
+    if(inp) inp.value='';
+    showLoginError('');
+  } else {
+    showLoginError(TX('That link doesn\'t look right — paste the full link from the address bar after WG login.','链接无效，请粘贴登录后地址栏里的完整链接'));
+  }
+}
+function fetchPortAndPersonalize(user){
+  loginLoading=true; renderLoginPanel();
+  var qs=new URLSearchParams({application_id:APP_ID, account_id:String(user.account_id), access_token:user.access_token, fields:'private.port', extra:'private.port'});
+  return fetch('https://api.worldofwarships.'+user.realm+'/wows/account/info/?'+qs.toString())
+    .then(function(res){ if(!res.ok) throw new Error('HTTP '+res.status); return res.json(); })
+    .then(function(json){
+      if(!json || json.status!=='ok' || !json.data || !json.data[String(user.account_id)] || !json.data[String(user.account_id)].private || !Array.isArray(json.data[String(user.account_id)].private.port)){
+        throw new Error('No port data returned');
+      }
+      var port=json.data[String(user.account_id)].private.port;
+      portIdSet={}; port.forEach(function(id){ portIdSet[String(id)]=1; });
+      portTotalCount=port.length;
+      var counts=computePoolCounts();
+      ownedInPoolCount=143-counts.total;
+      currentUser=user; loginLoading=false;
+      showLoginError(''); renderLoginPanel(); renderStateChips(); resetSession();
+    })
+    .catch(function(){
+      loginLoading=false; currentUser=null; portIdSet=null; portTotalCount=0; ownedInPoolCount=0;
+      clearSavedUser();
+      showLoginError(TX('Couldn\'t load your port — playing with the full pool.','无法加载你的港口 — 使用完整船池游玩。'));
+      renderLoginPanel(); renderStateChips(); resetSession();
+    });
+}
+var TYPES=[
+ {key:'gift', label:"Santa's Gift", short:'Gift', labelZh:'圣诞礼物补给箱', shortZh:'礼物', p:{rare:0.001,mid:0.004,common:0.02}, pity:100, doubloons:250, dollars:1, steelComp:250, packDbl:[250,1700,3750]},
+ {key:'mega', label:"Santa's Mega Gift", short:'Mega', labelZh:'圣诞超级礼物补给箱', shortZh:'超级', p:{rare:0.01,mid:0.03,common:0.12}, pity:15, doubloons:1250, dollars:5, steelComp:1250, packDbl:[1250,8500,18750]},
+ {key:'ultra',label:"Santa's Ultra Gift", short:'Ultra', labelZh:'圣诞特级礼物补给箱', shortZh:'特级', p:{rare:0.03,mid:0.09,common:0.20}, pity:7, doubloons:0, dollars:10, steelComp:1250, packUsd:[10,67.98,149]}
+];
+// Cheapest way to buy n containers using the shop's 1 / 8 / 20 packs (last year's bundles: 8-pack −15%, 20-pack −25%; Ultra packs are $67.98 / $149).
+function packCost(packs, n){
+  var best=Infinity;
+  for(var a=0;a*20<=n;a++){ for(var b=0;(a*20+b*8)<=n;b++){ var c=a*packs[2]+b*packs[1]+(n-a*20-b*8)*packs[0]; if(c<best) best=c; } }
+  return best;
+}
+function fmtMoney(x){ var v=Math.round(x*100)/100; return v.toLocaleString('en-US',{maximumFractionDigits:2}); }
+function typeByKey(k){ for(var i=0;i<TYPES.length;i++) if(TYPES[i].key===k) return TYPES[i]; return TYPES[1]; }
+function costTextFor(n, type){
+  if(type.key==='ultra') return n+' × '+typeShort(type)+' = $'+fmtMoney(packCost(type.packUsd, n))+L(' (cash only)','（仅现金）');
+  var d=packCost(type.packDbl, n); return n+' × '+typeShort(type)+' = '+fmtNum(d)+L(' doubloons',' 达布隆')+' ≈ $'+fmtMoney(d/250);
+}
+function openCount(){ var el=document.getElementById('inOpenX'); return Math.max(1,Math.min(9999,parseInt(el&&el.value)||20)); }
+function updateBatchCost(){
+  var sel=typeByKey(selectedType);
+  var n=openCount();
+  var br=document.getElementById('btnRoll'); if(br) br.textContent=L('🎲 Open '+n,'🎲 打开 '+n+' 个');
+  var bc=document.getElementById('batchCost'); if(bc) bc.textContent=L('Open ','打开 ')+costTextFor(n, sel);
+  var bc10=document.getElementById('batchCost10'); if(bc10) bc10.textContent='Open '+costTextFor(1, sel)+' · Open '+costTextFor(10, sel);
+}
+function roman(t){return {10:'X',9:'IX',8:'VIII',7:'VII',6:'VI',5:'V'}[t]||t}
+function fmtPct(x){ if(x===0) return '0%'; if(x<0.001) return '<0.1%'; return (x*100).toFixed(1)+'%'; }
+function fmtNum(n){return n.toLocaleString(LANG==='zh'?'zh-CN':'en-US')}
+
+function buildPools(){
+  function mapPool(list, group){
+    return list.filter(function(s){ return !isOwned(s[2]); }).map(function(s,i){return {name:s[0],zh:SHIP_ZH[s[2]]||null,tier:s[1],ship_id:s[2],group:group,idx:group+'-'+s[2],coal:!!COAL_NAMES[s[0]]}});
+  }
+  return { rare: mapPool(FULL_RARE,'rare'), mid: mapPool(FULL_MID,'mid'), common: mapPool(FULL_COMMON,'common') };
+}
+
+function pickGroupRenorm(type, pools){
+  var entries=[];
+  ['rare','mid','common'].forEach(function(g){ if(pools[g].length>0) entries.push({g:g,w:type.p[g]}); });
+  if(!entries.length) return null;
+  var tot=entries.reduce(function(a,e){return a+e.w},0); var r=Math.random()*tot;
+  for(var i=0;i<entries.length;i++){ r-=entries[i].w; if(r<=0) return entries[i].g; }
+  return entries[entries.length-1].g;
+}
+function totalShipProb(type){ return type.p.rare+type.p.mid+type.p.common; }
+function activeGroups(pools){ return ['rare','mid','common'].filter(function(g){ return pools[g].length>0; }); }
+function effectiveProbs(type, pools){
+  var total=totalShipProb(type); var active=activeGroups(pools);
+  var sumActive=active.reduce(function(a,g){return a+type.p[g]},0);
+  var eff={rare:0,mid:0,common:0,total:total,active:active};
+  if(!active.length){ eff.total=0; return eff; }
+  active.forEach(function(g){ eff[g]= total * (type.p[g]/sumActive); });
+  return eff;
+}
+function rollGroupNormal(type, pools){
+  var active=activeGroups(pools);
+  if(!active.length) return null;
+  var eff=effectiveProbs(type, pools);
+  var r=Math.random();
+  if(r>=eff.total) return null;
+  var cum=0;
+  for(var i=0;i<active.length;i++){ var g=active[i]; cum+=eff[g]; if(r<cum) return g; }
+  return active[active.length-1];
+}
+function fmtEff(p){
+  if(!p) return '—';
+  var v=p*100; var s=(Math.abs(v-Math.round(v))<0.001)? String(Math.round(v)) : String(Math.round(v*10)/10);
+  return s+'%';
+}
+
+/* ---------- FULL DROP TABLES (15.11 dev blog) ---------- */
+var BONUS_TYPES=[['Credits','银币'],['Ship XP','舰船经验'],['Commander XP','指挥官经验'],['Free XP','全局经验']];
+function pickBonus(){ var p=BONUS_TYPES[Math.floor(Math.random()*BONUS_TYPES.length)]; return {en:p[0], zh:p[1]}; }
+function bonusText(n, kindEn, kindZh, b){ return TX(n+'× '+kindEn+' bonus ('+b.en+')', n+'× '+kindZh+'经济加成（'+b.zh+'）'); }
+function emptyRewards(){ return {doubloons:0,coal:0,credits:0,premium:0,eliteXP:0,rp:0,steel:0,portSlots:0,goldenWon:0,bfWon:0,uncommon:0,rare:0,epic:0,legendary:0,signals:0}; }
+var GOLDEN_NORMAL=['Latouche-Tréville','Rodina','Tōgasa'];
+var GOLDEN_LEGACY=['Rodina G','Tōgasa G','Somers G','Tywysog Cymru'];
+var GOLDEN_TYPE={key:'golden', label:'Golden Gift', short:'Golden', labelZh:'金色礼物补给箱', shortZh:'金色', pity:10};
+function rollTable(table){
+  var total=0; for(var i=0;i<table.length;i++) total+=table[i].p;
+  if(total<=0) return {text:'—'};
+  var r=Math.random()*total;
+  for(var j=0;j<table.length;j++){ r-=table[j].p; if(r<=0) return table[j].make(); }
+  return table[table.length-1].make();
+}
+function goldenDropOutcome(){
+  session.rewards.goldenWon++; session.goldenInventory++;
+  return {text:TX('Golden Gift container','金色礼物补给箱'), golden:true};
+}
+function santaTable(type){
+  var shipEntry={p:totalShipProb(type), make:function(){ var s=pickShipByEff(type); if(s) return {ship:s}; session.rewards.steel+=type.steelComp; return {text:TX(fmtNum(type.steelComp)+' Steel (fleet complete)',fmtNum(type.steelComp)+' 钢铁（船已齐补偿）')}; }};
+  if(type.key==='gift') return [
+    {p:0.05, make:function(){ session.rewards.doubloons+=500; return {text:TX('500 Doubloons','500 达布隆')}; }},
+    {p:0.01, make:goldenDropOutcome},
+    {p:0.07, make:function(){ session.rewards.coal+=2500; return {text:TX('2,500 Coal','2,500 煤炭')}; }},
+    {p:0.01, make:function(){ session.rewards.premium+=30; return {text:TX('30 days Premium','30 天高级账号')}; }},
+    {p:0.10, make:function(){ session.rewards.eliteXP+=20000; return {text:TX('20,000 Elite Commander XP','20,000 精英指挥官经验')}; }},
+    {p:0.10, make:function(){ session.rewards.credits+=400000; return {text:TX('400,000 Credits','400,000 银币')}; }},
+    {p:0.055, make:function(){ session.rewards.portSlots+=1; return {text:TX('1× Port Slot','1× 港口船位')}; }},
+    {p:0.10, make:function(){ session.rewards.rare+=3; return {text:bonusText(3,'Rare','稀有',pickBonus())}; }},
+    {p:0.24, make:function(){ session.rewards.uncommon+=12; return {text:bonusText(12,'Uncommon','普通',pickBonus())}; }},
+    {p:0.24, make:function(){ session.rewards.signals+=25; return {text:TX('25× Signal flags','25× 信号旗')}; }},
+    shipEntry
+  ];
+  if(type.key==='mega') return [
+    {p:0.05, make:function(){ session.rewards.doubloons+=2500; return {text:TX('2,500 Doubloons','2,500 达布隆')}; }},
+    {p:0.10, make:goldenDropOutcome},
+    {p:0.08, make:function(){ session.rewards.coal+=12500; return {text:TX('12,500 Coal','12,500 煤炭')}; }},
+    {p:0.01, make:function(){ session.rewards.premium+=180; return {text:TX('180 days Premium','180 天高级账号')}; }},
+    {p:0.10, make:function(){ session.rewards.eliteXP+=100000; return {text:TX('100,000 Elite Commander XP','100,000 精英指挥官经验')}; }},
+    {p:0.10, make:function(){ session.rewards.credits+=2250000; return {text:TX('2,250,000 Credits','2,250,000 银币')}; }},
+    {p:0.32, make:function(){ session.rewards.rare+=20; return {text:bonusText(20,'Rare','稀有',pickBonus())}; }},
+    {p:0.08, make:function(){ session.rewards.epic+=7; return {text:bonusText(7,'Epic','史诗',pickBonus())}; }},
+    shipEntry
+  ];
+  // ultra slot 1
+  return [
+    {p:0.05, make:function(){ session.rewards.doubloons+=2500; return {text:TX('2,500 Doubloons','2,500 达布隆')}; }},
+    {p:0.40, make:function(){ session.rewards.coal+=6000; return {text:TX('6,000 Coal','6,000 煤炭')}; }},
+    {p:0.20, make:goldenDropOutcome},
+    {p:0.03, make:function(){ session.rewards.premium+=180; return {text:TX('180 days Premium','180 天高级账号')}; }},
+    shipEntry
+  ];
+}
+function ultraSlot3Table(){ return [
+  {p:0.05, make:function(){ session.rewards.doubloons+=2500; return {text:TX('2,500 Doubloons','2,500 达布隆')}; }},
+  {p:0.81, make:function(){ session.rewards.eliteXP+=37500; return {text:TX('37,500 Elite Commander XP','37,500 精英指挥官经验')}; }},
+  {p:0.14, make:function(){ session.rewards.coal+=6000; return {text:TX('6,000 Coal','6,000 煤炭')}; }}
+];}
+function takeFromPool(pool, group){
+  if(!pool.length) return null;
+  var idx=Math.floor(Math.random()*pool.length);
+  var name=pool.splice(idx,1)[0];
+  return {name:name, zh:GOLDEN_ZH[name]||null, tier:0, group:group};
+}
+function pickGoldenShip(){
+  var entries=[];
+  if(session.goldenNormal.length) entries.push({g:'golden', w:0.09999});
+  if(session.goldenLegacy.length) entries.push({g:'legacy', w:0.00001});
+  if(!entries.length) return null;
+  var tot=0; entries.forEach(function(e){ tot+=e.w; });
+  var r=Math.random()*tot, chosen=entries[entries.length-1];
+  for(var i=0;i<entries.length;i++){ r-=entries[i].w; if(r<=0){ chosen=entries[i]; break; } }
+  return chosen.g==='golden'? takeFromPool(session.goldenNormal,'golden') : takeFromPool(session.goldenLegacy,'legacy');
+}
+var BF_TYPE={key:'bf', label:'Battle Forged Premium', short:'BF', labelZh:'战火锻造高级补给箱', shortZh:'锻造', pity:3};
+function bfDropOutcome(){
+  session.rewards.bfWon++; session.bfInventory++;
+  return {text:TX('Battle Forged Premium container','战火锻造高级补给箱'), bf:true};
+}
+function goldenTable(){ return [
+  {p:0.60, make:function(){ session.rewards.epic+=7; return {text:bonusText(7,'Epic','史诗',pickBonus())}; }},
+  {p:0.20, make:function(){ session.rewards.rp+=3750; return {text:TX('3,750 Research Points','3,750 研发点')}; }},
+  {p:0.10, make:function(){ session.rewards.steel+=3000; return {text:TX('3,000 Steel','3,000 钢铁')}; }},
+  {p:session.goldenNormal.length? 0.09999 : 0, make:function(){ var s=takeFromPool(session.goldenNormal,'golden'); return s? {ship:s} : {text:bonusText(7,'Epic','史诗',pickBonus())}; }},
+  {p:session.goldenLegacy.length? (session.goldenNormal.length? 0.00001 : 0.10) : 0, make:function(){ var s=takeFromPool(session.goldenLegacy,'legacy'); return s? {ship:s} : {text:TX('3,000 Steel','3,000 钢铁')}; }},
+  {p:(!session.goldenNormal.length && !session.goldenLegacy.length)? 0.10 : 0, make:bfDropOutcome}
+];}
+function pickShipByEff(type){
+  var eff=effectiveProbs(type, session.pools);
+  if(!eff.active.length) return null;
+  var r=Math.random()*eff.total, cum=0, g=eff.active[eff.active.length-1];
+  for(var i=0;i<eff.active.length;i++){ cum+=eff[eff.active[i]]; if(r<cum){ g=eff.active[i]; break; } }
+  var pool=session.pools[g]; if(!pool.length) return null;
+  var idx=Math.floor(Math.random()*pool.length);
+  return pool.splice(idx,1)[0];
+}
+function shipFromGroup(type, group){
+  if(!group) return null;
+  var pool=session.pools[group]; if(!pool || !pool.length) return null;
+  var idx=Math.floor(Math.random()*pool.length);
+  return pool.splice(idx,1)[0];
+}
+
+/* ---------- ROLL-BY-ROLL SESSION ---------- */
+/* ---------- HOLIDAY CONVOY PRE-OWN (Golden normals via event) ---------- */
+var CONVOY_KEY='wows-santa-convoy-v1';
+var convoyOwn={};
+function loadConvoy(){ try{ var j=JSON.parse(localStorage.getItem(CONVOY_KEY)||'{}'); GOLDEN_NORMAL.forEach(function(n){ if(j[n]) convoyOwn[n]=true; }); }catch(e){} }
+function saveConvoy(){ try{ localStorage.setItem(CONVOY_KEY, JSON.stringify(convoyOwn)); }catch(e){} }
+function goldenPreOwnCount(){ return GOLDEN_NORMAL.filter(function(n){ return !!convoyOwn[n]; }).length; }
+function preOwnedGoldenShips(){ return GOLDEN_NORMAL.filter(function(n){ return !!convoyOwn[n]; }).map(function(n){ return {name:n, zh:GOLDEN_ZH[n]||null, tier:0, group:'golden', pre:true}; }); }
+function syncConvoyChecks(){ document.querySelectorAll('.convoyChk').forEach(function(c){ c.checked=!!convoyOwn[c.getAttribute('data-ship')]; }); }
+
+/* ---------- MANUAL POOL (checkbox = owned; for guests / CN-server players) ---------- */
+var MANUAL_KEY='wows-santa-manualpool-v1';
+var manualOwn={};
+function loadManual(){ try{ var j=JSON.parse(localStorage.getItem(MANUAL_KEY)||'{}'); Object.keys(j).forEach(function(k){ if(j[k]) manualOwn[k]=true; }); }catch(e){} }
+function saveManual(){ try{ localStorage.setItem(MANUAL_KEY, JSON.stringify(manualOwn)); }catch(e){} }
+function manualCount(){ return Object.keys(manualOwn).length; }
+var MANUAL_GROUPS=[['rare',function(){return FULL_RARE}],['mid',function(){return FULL_MID}],['common',function(){return FULL_COMMON}]];
+function buildManualPoolUI(){
+  var wrap=document.getElementById('poolGroups'); if(!wrap) return;
+  wrap.innerHTML=MANUAL_GROUPS.map(function(gd){
+    var g=gd[0], list=gd[1]();
+    return '<div class="pool-group" data-group="'+g+'"><div class="pool-group-head"><b><span class="mp-glabel">'+grpLabel(g)+'</span> · <span class="mp-gcount" data-group="'+g+'">0</span>/'+list.length+'</b>'
+      +'<button class="btn-sec btn-mini mp-all" data-group="'+g+'" type="button">'+L('Select all','全选')+'</button>'
+      +'<button class="btn-sec btn-mini mp-none" data-group="'+g+'" type="button">'+L('Clear','清空')+'</button></div>'
+      +'<div class="pool-grid">'+list.map(function(s){
+        return '<label class="pool-item" data-name="'+escapeHtml((s[0]+' '+(SHIP_ZH[s[2]]||'')).toLowerCase())+'"><input type="checkbox" class="mpChk" data-id="'+String(s[2])+'" data-group="'+g+'"><span class="mp-name">'+shipDisplayHtml({name:s[0], zh:SHIP_ZH[s[2]]||null, ship_id:s[2]})+'</span></label>';
+      }).join('')+'</div></div>';
+  }).join('');
+  wrap.querySelectorAll('.mpChk').forEach(function(c){ c.addEventListener('change',function(){ var id=c.getAttribute('data-id'); if(c.checked) manualOwn[id]=true; else delete manualOwn[id]; saveManual(); updateManualCounts(); resetSession(); }); });
+  wrap.querySelectorAll('.mp-all').forEach(function(b){ b.addEventListener('click',function(){ var g=b.getAttribute('data-group'); document.querySelectorAll('.mpChk[data-group="'+g+'"]').forEach(function(c){ c.checked=true; manualOwn[c.getAttribute('data-id')]=true; }); saveManual(); updateManualCounts(); resetSession(); }); });
+  wrap.querySelectorAll('.mp-none').forEach(function(b){ b.addEventListener('click',function(){ var g=b.getAttribute('data-group'); document.querySelectorAll('.mpChk[data-group="'+g+'"]').forEach(function(c){ c.checked=false; delete manualOwn[c.getAttribute('data-id')]; }); saveManual(); updateManualCounts(); resetSession(); }); });
+  var ca=document.getElementById('poolClearAll'); if(ca) ca.addEventListener('click',function(){ manualOwn={}; document.querySelectorAll('.mpChk').forEach(function(c){ c.checked=false; }); saveManual(); updateManualCounts(); resetSession(); });
+  var ps=document.getElementById('poolSearch'); if(ps) ps.addEventListener('input',function(){ var q=(ps.value||'').trim().toLowerCase(); document.querySelectorAll('.pool-item').forEach(function(it){ it.style.display=(!q || (it.getAttribute('data-name')||'').indexOf(q)>=0)? '' : 'none'; }); document.querySelectorAll('.pool-group').forEach(function(gr){ var any=false; gr.querySelectorAll('.pool-item').forEach(function(it){ if(it.style.display!=='none') any=true; }); gr.style.display=any? '' : 'none'; }); });
+  var cb=document.getElementById('poolCollapseBtn'); if(cb) cb.addEventListener('click',function(){ var f=document.getElementById('poolFold'); if(f){ f.open=false; f.scrollIntoView({block:'nearest'}); } });
+}
+function updateManualCounts(){
+  var fc=document.getElementById('poolFoldCount'); if(fc) fc.textContent=L('Ticked ','已勾选 ')+manualCount()+' / 143';
+  ['rare','mid','common'].forEach(function(g){ var c=0; document.querySelectorAll('.mpChk[data-group="'+g+'"]').forEach(function(x){ if(x.checked) c++; }); var el=document.querySelector('.mp-gcount[data-group="'+g+'"]'); if(el) el.textContent=c; });
+}
+function syncManualUI(){ document.querySelectorAll('.mpChk').forEach(function(c){ c.checked=!!manualOwn[c.getAttribute('data-id')]; }); updateManualCounts(); syncManualAvailability(); }
+function syncManualAvailability(){
+  var dis=!!currentUser;
+  var fold=document.getElementById('poolFold'); if(fold) fold.classList.toggle('disabled', dis);
+  var note=document.getElementById('poolFoldNote'); if(note) note.hidden=!dis;
+  document.querySelectorAll('.mpChk,.mp-all,.mp-none').forEach(function(el){ el.disabled=dis; });
+  var ca=document.getElementById('poolClearAll'); if(ca) ca.disabled=dis;
+  var ps=document.getElementById('poolSearch'); if(ps) ps.disabled=dis;
+}
+function syncManualLang(){
+  document.querySelectorAll('.mp-glabel').forEach(function(el){ var g=el.closest('.pool-group').getAttribute('data-group'); el.textContent=grpLabel(g); });
+  document.querySelectorAll('.mp-all').forEach(function(b){ b.textContent=L('Select all','全选'); });
+  document.querySelectorAll('.mp-none').forEach(function(b){ b.textContent=L('Clear','清空'); });
+  document.querySelectorAll('.mpChk').forEach(function(c){ var id=Number(c.getAttribute('data-id')); var sp=c.parentElement.querySelector('.mp-name'); if(!sp) return; var all=FULL_RARE.concat(FULL_MID,FULL_COMMON); for(var i=0;i<all.length;i++){ if(all[i][2]===id){ sp.innerHTML=shipDisplayHtml({name:all[i][0], zh:SHIP_ZH[id]||null, ship_id:id}); break; } } });
+  updateManualCounts();
+}
+
+var selectedType='mega';
+var session=null;
+function resetSession(){
+  var pools=buildPools();
+  session={pools:pools, initial:{rare:pools.rare.length,mid:pools.mid.length,common:pools.common.length}, log:[], acquired:[], counters:{gift:0,mega:0,ultra:0}, openedByType:{gift:0,mega:0,ultra:0}, total:0, logSeq:0,
+    rewards:emptyRewards(), goldenInventory:0, goldenOpened:0, goldenShipLess:0,
+    goldenNormal:GOLDEN_NORMAL.filter(function(n){ return !convoyOwn[n]; }), goldenLegacy:GOLDEN_LEGACY.slice(),
+    bfInventory:0, bfOpened:0, bfNoNj:0, bfNjOwned:false, celebrated:0};
+  renderStateChips();
+  renderSession();
+}
+function rollOne(){
+  var type=typeByKey(selectedType);
+  var pityOn=document.getElementById('inPity').checked;
+  session.openedByType[type.key]++;
+  session.total=(session.openedByType.gift||0)+(session.openedByType.mega||0)+(session.openedByType.ultra||0);
+  var hasShips=activeGroups(session.pools).length>0;
+  var forced=pityOn && hasShips && (session.counters[type.key]+1>=type.pity);
+  var outcome;
+  if(forced){
+    var s=shipFromGroup(type, pickGroupRenorm(type, session.pools));
+    outcome=s? {ship:s} : rollTable(santaTable(type));
+  } else {
+    outcome=rollTable(santaTable(type));
+  }
+  var entry={n:++session.logSeq, type:type, ship:outcome.ship||null, forced:forced && !!outcome.ship, headline:outcome.text||'', goldenWin:!!outcome.golden, extras:[]};
+  if(type.key==='ultra'){
+    // Slot 2 — always 6x Epic bonus; Slot 3 — its own table. Headline stays Slot 1.
+    session.rewards.epic+=6;
+    var b2=pickBonus();
+    entry.extras.push(TX('Slot 2: 6× Epic bonus ('+b2.en+')','槽位 2：6× 史诗经济加成（'+b2.zh+'）'));
+    var o3=rollTable(ultraSlot3Table());
+    entry.extras.push({en:'Slot 3: '+((o3.text&&o3.text.en)||txt(o3.text)), zh:'槽位 3：'+((o3.text&&o3.text.zh)||txt(o3.text))});
+  }
+  if(entry.ship){ session.acquired.push(entry.ship); session.counters[type.key]=0; }
+  else { session.counters[type.key]++; }
+  session.log.unshift(entry);
+  return entry;
+}
+function rollBatch(n){ for(var i=0;i<n;i++) rollOne(); renderSession(true); }
+function rollGoldenOne(){
+  if(session.goldenInventory<=0) return null;
+  var pityOn=document.getElementById('inPity').checked;
+  session.goldenInventory--; session.goldenOpened++;
+  var hasShips=session.goldenNormal.length>0 || session.goldenLegacy.length>0;
+  var forced=pityOn && hasShips && (session.goldenShipLess+1>=GOLDEN_TYPE.pity);
+  // WG CS-confirmed (Oct 2026): once all golden ships are owned, the same 10-pity guarantees a Battle Forged container on the 10th Golden Gift.
+  var forcedBF=pityOn && !hasShips && (session.goldenShipLess+1>=GOLDEN_TYPE.pity);
+  var outcome;
+  if(forced){
+    var s=pickGoldenShip();
+    outcome=s? {ship:s} : rollTable(goldenTable());
+  } else if(forcedBF){
+    outcome=bfDropOutcome();
+  } else {
+    outcome=rollTable(goldenTable());
+  }
+  var entry={n:++session.logSeq, type:GOLDEN_TYPE, ship:outcome.ship||null, forced:(forced && !!outcome.ship) || (forcedBF && !!outcome.bf), headline:outcome.text||'', goldenWin:false, bfWin:!!outcome.bf, extras:[], golden:true};
+  if(entry.ship){ session.acquired.push(entry.ship); session.goldenShipLess=0; }
+  else if(outcome.bf){ session.goldenShipLess=0; }
+  else { session.goldenShipLess++; }
+  session.log.unshift(entry);
+  return entry;
+}
+function rollBFOne(){
+  if(session.bfInventory<=0) return null;
+  session.bfInventory--; session.bfOpened++;
+  var njOwned=!!session.bfNjOwned;
+  var forced=!njOwned && (session.bfNoNj+1>=BF_TYPE.pity);
+  var b1=pickBonus(); session.rewards.legendary+=3;
+  var b3=pickBonus(); session.rewards.legendary+=3;
+  var ship=null, head='';
+  if(forced){
+    ship={name:'New Jersey BF', zh:'新泽西 BF', tier:10, group:'bf'};
+  } else {
+    var r=Math.random();
+    if(r<0.25){ session.rewards.rp+=10000; head=TX('10,000 Research Points','10,000 研发点'); }
+    else if(r<0.50){ session.rewards.steel+=5000; head=TX('5,000 Steel','5,000 钢铁'); }
+    else if(njOwned){ session.rewards.steel+=2500; head=TX('2,500 Steel','2,500 钢铁'); }
+    else { ship={name:'New Jersey BF', zh:'新泽西 BF', tier:10, group:'bf'}; }
+  }
+  var entry={n:++session.logSeq, type:BF_TYPE, ship:ship, forced:forced && !!ship, headline:head, goldenWin:false, extras:[TX('Slot 1: 3× Legendary bonus ('+b1.en+')','槽位 1：3× 传奇经济加成（'+b1.zh+'）'), TX('Slot 3: 3× Legendary bonus ('+b3.en+')','槽位 3：3× 传奇经济加成（'+b3.zh+'）')], bfRoll:true};
+  if(ship){ session.acquired.push(ship); session.bfNjOwned=true; session.bfNoNj=0; }
+  else if(!njOwned){ session.bfNoNj++; }
+  session.log.unshift(entry);
+  return entry;
+}
+function rollBFBatch(){
+  var guard=0;
+  while(session.bfInventory>0 && guard<1000){ rollBFOne(); guard++; }
+  renderSession(true);
+}
+/* Ship art (WG CDN large renders) for the full-screen reveal; G/Legacy/BF ships reuse their base ship art */
+var SHIP_IMG={"Álvaro de Bazán":"https://wows-gloss-icons.wgcdn.co/icons/vehicle/large/PSSD510_1461fa6ec64246a7aff3c59fdc65ab9105f625bbc1bcf466cf0b26a942ff3b2f.png","Hildebrand":"https://wows-gloss-icons.wgcdn.co/icons/vehicle/large/PGSC710_b964c85d35ecc795b30e56d3ffdbc55f4c73f06c9ab9a1fa3e2d251436061675.png","Thunderer":"https://wows-gloss-icons.wgcdn.co/icons/vehicle/large/PBSB510_70b59d0639ef0b4e969be439eca8a8d46186e78e842cdc1249369b28964071a4.png","Puerto Rico":"https://wows-gloss-icons.wgcdn.co/icons/vehicle/large/PASC610_cff997335f6e0b36513e38e939162aaf7f3b476a18d553d5739dd5c8b20db95a.png","Missouri":"https://wows-gloss-icons.wgcdn.co/icons/vehicle/large/PASB509_d78529f32fb27fa16ad3fb004191caa1af482a652b2cc033e66ceb712ff3e4ed.png","Lenin":"https://wows-gloss-icons.wgcdn.co/icons/vehicle/large/PRSB518_9d611dffa2c2776932b1f2b7114d6826d394400e8f04963609f4a0228450767f.png","Asashio":"https://wows-gloss-icons.wgcdn.co/icons/vehicle/large/PJSD518_34bd443648e930575af78299910f4d0224dc61ab8ff3c3424838cf82eef5d6ed.png","Mikhail Kutuzov":"https://wows-gloss-icons.wgcdn.co/icons/vehicle/large/PRSC508_30f4c37d5f4a0ce3f2b015f4d3ec82d220ed68097c213987e5bd6800444c247b.png","Gremyashchy":"https://wows-gloss-icons.wgcdn.co/icons/vehicle/large/PRSD001_4813c14eaa885f844a252d5b2f60a30af7556e97cd233d9db5db409443bf4717.png","Kamikaze":"https://wows-gloss-icons.wgcdn.co/icons/vehicle/large/PJSD025_b1845de7ee9cb9fb41b240d9518a5b086a953f7a0c1159df7563a310f9ea44d8.png","Giulio Cesare":"https://wows-gloss-icons.wgcdn.co/icons/vehicle/large/PISB505_1f3da5ac9af291843f0eb118b64af529a72a6cc7977896c6abba52ed65f71d9a.png","Lüshun":"https://wows-gloss-icons.wgcdn.co/icons/vehicle/large/PZSD510_5c6543f68f65dbf292dcf78d255ad689fc5bebed83ae634f00fa2081a24592f1.png","Småland":"https://wows-gloss-icons.wgcdn.co/icons/vehicle/large/PWSD610_f317988932210641784cfb5259bfa4675bd86c7e6c8e64129db9d9d04aa2b3be.png","La Pampa":"https://wows-gloss-icons.wgcdn.co/icons/vehicle/large/PVSD710_305dbbd34f1fc7fb5e66b89ffbf960ae6ae33cc24093bd8cb716531a88c74276.png","Smolensk":"https://wows-gloss-icons.wgcdn.co/icons/vehicle/large/PRSC610_0561688d2b26beb3eef91cdab7c3e900acc7146d0acfe63bb6845e5e5f7c4bed.png","Tonijn":"https://wows-gloss-icons.wgcdn.co/icons/vehicle/large/PHSS710_37591e14bb688aabbbede3339d7cb925ad381c58a04cadf57b24356f4701270a.png","Monmouth":"https://wows-gloss-icons.wgcdn.co/icons/vehicle/large/PBSC020_f4c7fc06a107df29f5fde9af012c84290159ba822c8e23bd6d33f5262fed6eac.png","Rhode Island":"https://wows-gloss-icons.wgcdn.co/icons/vehicle/large/PASB720_01f68e5becca40ce02fa96919fb11956e17e73fd4a7b5652fe5de18947f39ddf.png","Conte Verde":"https://wows-gloss-icons.wgcdn.co/icons/vehicle/large/PISB720_c13619d505e5c8dcf0806b7d638478cfa56eb2073aa0bfede16fc30c5de140ea.png","Fuyutsuki":"https://wows-gloss-icons.wgcdn.co/icons/vehicle/large/PJSD710_5fa539e1f8e7db54f5b1791143c09bdad763b19a8264ab657806fba51e5a5234.png","Almirante Irízar":"https://wows-gloss-icons.wgcdn.co/icons/vehicle/large/PVSC710_ef8cffe8b5333f624eb4faa0ffe715a9579c57c53c411a550132fa3821cbad1f.png","Kronshtadt":"https://wows-gloss-icons.wgcdn.co/icons/vehicle/large/PRSC509_216051ab99444a97f001a08936ca8fab3eccc80ab4b42693ab4e5ff2c8f5e91b.png","Hizen":"https://wows-gloss-icons.wgcdn.co/icons/vehicle/large/PJSB519_01bfac2d8c144cb84e22a32954048c1b32f7764e11e8c72527e55a268a659339.png","Musashi":"https://wows-gloss-icons.wgcdn.co/icons/vehicle/large/PJSB509_3786532ab064c1daece5ae31f32acf22c10a1b32a993706c15dc1d4921e19c9b.png","Jean Bart":"https://wows-gloss-icons.wgcdn.co/icons/vehicle/large/PFSB518_eb139cc52fa2d0fa969c958fd8ff5ba0f6c833e0f9b5e9729a4673941e692d52.png","Benham":"https://wows-gloss-icons.wgcdn.co/icons/vehicle/large/PASD509_0c6e04e9c3ec32cd902703db73280416926982b0946b584ae978746d770a04d7.png","Błyskawica '52":"https://wows-gloss-icons.wgcdn.co/icons/vehicle/large/PWSD719_9e2c889140117fd4b375d60395aa13ffce1ea5892a5badd259a04a901c72056a.png","Georgia":"https://wows-gloss-icons.wgcdn.co/icons/vehicle/large/PASB729_60efa36d43107ec0896684c486af35d8d0adb196e9d7f260bccb75d13b0932c8.png","Indiana":"https://wows-gloss-icons.wgcdn.co/icons/vehicle/large/PASB719_5e7d6bbccffde1f1d0a1c110c27108fb6c40746e25f5ee0fdc1522bc4740d18e.png","Odin":"https://wows-gloss-icons.wgcdn.co/icons/vehicle/large/PGSB508_d2056d8d664334d0f16e7de4a8e9709b15360bbfc2b43711d0a1333900543dae.png","Colossus":"https://wows-gloss-icons.wgcdn.co/icons/vehicle/large/PBSA528_49d0faf41e7780184cf87702b64ba9dcc3b8f407cc76654d2e130788c11505f5.png","Anchorage":"https://wows-gloss-icons.wgcdn.co/icons/vehicle/large/PASC518_1256947206cb1c91c440a17347632d543495ca8e6014756fa76562cac53874c3.png","Massachusetts":"https://wows-gloss-icons.wgcdn.co/icons/vehicle/large/PASB518_123f4847f0575749fbd1f83941b34ad311037e15f2fd180909314f9a6def18ac.png","Enterprise":"https://wows-gloss-icons.wgcdn.co/icons/vehicle/large/PASA518_958bbd01b8a0863379822818a0b76125e464ae55eb2e8c02be531aa1b064108a.png","Z-39":"https://wows-gloss-icons.wgcdn.co/icons/vehicle/large/PGSD508_1e3345fff70f7bd1cfb248abe4617916a93a2fab57c3c9e79cffdb08fc57d64a.png","Belfast":"https://wows-gloss-icons.wgcdn.co/icons/vehicle/large/PBSC507_7274dfabc6755eb9a572c98e4c240075b77d0d5e087bb9d922b9df28435dc07d.png","Nelson":"https://wows-gloss-icons.wgcdn.co/icons/vehicle/large/PBSB517_62701f655c54ec968f85c4317f779ca17ba0409dbe9d4b48110ef7da1df62a35.png","T-61":"https://wows-gloss-icons.wgcdn.co/icons/vehicle/large/PGSD506_c9d5bfe76f48830e10834b5e72d879d6e5fcd706769b641f9f960d5d9256a70f.png","Admiral Graf Spee":"https://wows-gloss-icons.wgcdn.co/icons/vehicle/large/PGSC506_fafca8506dd146610e4c03fc2f6a373df89461307de2b9bdf4bc9dcbac894cdb.png","Erich Loewenhardt":"https://wows-gloss-icons.wgcdn.co/icons/vehicle/large/PGSA506_23177729f4f526718767dc042755da7043b7f43830f113ca55adcbf1d3e38736.png","Kamikaze R":"https://wows-gloss-icons.wgcdn.co/icons/vehicle/large/PJSD026_472abb9e0a9af051fbfbbba974402fd6ba40584e200877d7a7fa7e728eeb4fc0.png","Fūjin":"https://wows-gloss-icons.wgcdn.co/icons/vehicle/large/PJSD017_9d6cfd515b9c3a1e815ea93403a30f2d5de7922d60a3077565e774f9b4e585af.png","Sun Yat-Sen":"https://wows-gloss-icons.wgcdn.co/icons/vehicle/large/PZSB529_e101dde1ab6ce3235f78f24a10d09e2403f35ccaddb67727f8a9e51c004e7878.png","Kozma Minin":"https://wows-gloss-icons.wgcdn.co/icons/vehicle/large/PRSC719_55fe75b28568f3054cb01b9781c09838f28be0f2d2171be46ecbd9067ae59165.png","Ferrante Gonzaga":"https://wows-gloss-icons.wgcdn.co/icons/vehicle/large/PISC719_9e8778f342d1998db5c7642cfddcb848b09c0942135beddf56fd9ae94391dd3e.png","Groningen":"https://wows-gloss-icons.wgcdn.co/icons/vehicle/large/PHSD509_079dfd11f5ecd0514c852254c1b93f42a742442eccb9e99d11615cd3c16b30c9.png","Scarlet Thunder":"https://wows-gloss-icons.wgcdn.co/icons/vehicle/large/PBSB609_9dc8f3f8e026b29e5f2ffcf79e93f61e62b18051014171bd7c131826419875dd.png","Halford":"https://wows-gloss-icons.wgcdn.co/icons/vehicle/large/PASD519_5f406df492412bf22b038c514d3230ae2c639def2fbe4a22d0b3c329f498973d.png","Almirante Grau":"https://wows-gloss-icons.wgcdn.co/icons/vehicle/large/PVSC508_f93574cd9a503d1be2ca41d3946c99300fbf2bc84a3079a61ce12f5316daef7c.png","Provorny":"https://wows-gloss-icons.wgcdn.co/icons/vehicle/large/PRSD718_bfe5463651a995c67aa1ad4386fee0f4614c3a8da899b8cfa26407e6d534de5b.png","Borodino":"https://wows-gloss-icons.wgcdn.co/icons/vehicle/large/PRSB528_fb06be7060eece4995317b1868a24b69b246c89a421060c5e227b1c5a92d5d52.png","Aquila":"https://wows-gloss-icons.wgcdn.co/icons/vehicle/large/PISA508_6509fb55ed206dadfcde4ee296e0409cd8ff43e3f3e3c3669ee2dba69deea043.png","Wiesbaden":"https://wows-gloss-icons.wgcdn.co/icons/vehicle/large/PGSC728_29919dd04827c3c47364186f15448b8a344dfdc0e7f99733eb3a73ed7f27256f.png","Schill":"https://wows-gloss-icons.wgcdn.co/icons/vehicle/large/PGSC528_d3f8ef3678be39519707df484de19aaedc9da1c9016bfd03edf0b4b17dc21501.png","Eskimo":"https://wows-gloss-icons.wgcdn.co/icons/vehicle/large/PBSD718_2a13dd39e4ec1fdad994e6d51a2619b1670b27c095c7dc5521c2a03d73e43fc6.png","Hampshire":"https://wows-gloss-icons.wgcdn.co/icons/vehicle/large/PBSC538_008a5f691d20f6d44e02266283a159df127062caf3d62b553cfd53a4aeb2dd26.png","Cheshire":"https://wows-gloss-icons.wgcdn.co/icons/vehicle/large/PBSC508_503f1b360f0fec77ba2fc6eee9c1ae73f02aab918217602dd1d95771a5d98b00.png","Indomitable":"https://wows-gloss-icons.wgcdn.co/icons/vehicle/large/PBSA508_cd6d5cd1cea8d26b445ebabac79fbb77941b3b47476da96cda2360aa33f8d7f3.png","Constellation":"https://wows-gloss-icons.wgcdn.co/icons/vehicle/large/PASB538_e00a7c2e9474fddd9265cd0cd2f03c4719b0f41310cc456f45f311769398add8.png","Dalian":"https://wows-gloss-icons.wgcdn.co/icons/vehicle/large/PZSC509_b1167e64b26258856e6e2efaa7cc269a4e54d0542743abbaed8a47ef560242fb.png","Velos":"https://wows-gloss-icons.wgcdn.co/icons/vehicle/large/PWSD509_1250ee4db6553e2d957518a6f023dfc7e4d0db89f0b299b0920b04b24a8b254c.png","Victoria":"https://wows-gloss-icons.wgcdn.co/icons/vehicle/large/PSSB719_ed45820c07380b7a8929d82bbbb7ac2f2908d92b428b54c76017fb3248528612.png","Navarin":"https://wows-gloss-icons.wgcdn.co/icons/vehicle/large/PRSB509_2f87825ae02217f057d85344e1a1a50f3e57aa105c6cbb30a74f15697fc7e61b.png","Minegumo":"https://wows-gloss-icons.wgcdn.co/icons/vehicle/large/PJSD719_d1620189ee32695e703d39123ce65fe3d8f74b18f8717b439dab116c7dd53e11.png","Suzuya":"https://wows-gloss-icons.wgcdn.co/icons/vehicle/large/PJSC739_4ecc7985d5d6dc9e0aa9c2ef2cbbb4f9aaa5ca7ca1e18fc398c8396b5a4ad2cf.png","Tsurugi":"https://wows-gloss-icons.wgcdn.co/icons/vehicle/large/PJSB549_f41d9c3d62f699a388af8a668e02164539c36f18451911984b8d3ec3299799e8.png","Giuseppe Verdi":"https://wows-gloss-icons.wgcdn.co/icons/vehicle/large/PISB519_ee3851dfd88d2da3d5c201534dcd3a8a95c4f53b91e686a1d90b1496b6bd1a22.png","Marco Polo":"https://wows-gloss-icons.wgcdn.co/icons/vehicle/large/PISB509_bf79fb22738ed608d2be925b1690e38a629288bdecdfdb5c703ef74c33e7c6c2.png","Z-44":"https://wows-gloss-icons.wgcdn.co/icons/vehicle/large/PGSD519_2f5214edfa00d38e88f3bfb40d4a089ad9be22507ba762c7db2c5175e9344b47.png","Aberdeen":"https://wows-gloss-icons.wgcdn.co/icons/vehicle/large/PBSC719_e56636c5770c8245c83b95d5718c108b4a684b1ac2137b32e015034615828878.png","Cambridge":"https://wows-gloss-icons.wgcdn.co/icons/vehicle/large/PASC719_0c148eefb3dbc70f4ebc8efed2ed07da05f6c6c450f4c013a0352976b63b66a6.png","Tulsa":"https://wows-gloss-icons.wgcdn.co/icons/vehicle/large/PASC519_389c3552477193a920ef83e6d144e7bc9b93b5e5cef25594082f1a622ccc7392.png","Baotou":"https://wows-gloss-icons.wgcdn.co/icons/vehicle/large/PZSC729_d04737975cbc77414c69d4639d81ab326988af147e262aa2b77b3d11790d9b3e.png","Fort Worth":"https://wows-gloss-icons.wgcdn.co/icons/vehicle/large/PASC729_89653582a41f53e4f4faef3ce02b229ab3dca40b85ff5538eccd871242e152f2.png","Cayuga":"https://wows-gloss-icons.wgcdn.co/icons/vehicle/large/PUSD709_3303c544b5e10f244529909a4159934154aad5541f7b5096c14077a536f546a7.png","Triunfante":"https://wows-gloss-icons.wgcdn.co/icons/vehicle/large/PSSB709_1bb90af3f7a3190c7ee98de766e2758005d5b8ca10709258e789793cc23a9470.png","Friedrich Carl":"https://wows-gloss-icons.wgcdn.co/icons/vehicle/large/PGSB719_49c18898d4a61ef569539110c8e49c511e6ca558321d37f14e11a21bd42fe2e2.png","Narai":"https://wows-gloss-icons.wgcdn.co/icons/vehicle/large/PZSC718_f5068745035ea5fc1e831ef5085e9066befc074380d18678e9f4797f90b418d4.png","Orkan":"https://wows-gloss-icons.wgcdn.co/icons/vehicle/large/PWSD508_be5e476e0085545cd2bf06aee5972fdcbb83deccc400171d8e9f9da57493cce9.png","Turgut Reis":"https://wows-gloss-icons.wgcdn.co/icons/vehicle/large/PWSB718_42ced6b25504e8fe64cf7f8853a7bd7c18c8ba4168fbd747578b908da207111b.png","Regele Carol I":"https://wows-gloss-icons.wgcdn.co/icons/vehicle/large/PWSC718_efb8ed4a82d78d56acf8788a8d07eb4050fb3356b0c570cd56792550266dde66.png","Comandante Aguirre":"https://wows-gloss-icons.wgcdn.co/icons/vehicle/large/PVSC708_ced5ff35cafc853334d91838b44da2c0d78822ef2b0d4c2ad92ae7780aa18c65.png","Numancia":"https://wows-gloss-icons.wgcdn.co/icons/vehicle/large/PSSC508_2f6af75c4c0e1d0c5102f72b14228db809d9c811c450e9d4a605df800bf8e454.png","S-189":"https://wows-gloss-icons.wgcdn.co/icons/vehicle/large/PRSS508_966c538ff5374f46501defa9517b7bc9e4b8166d4cf9a752b7b81f408bd82aec.png","Pyotr Bagration":"https://wows-gloss-icons.wgcdn.co/icons/vehicle/large/PRSC538_dc7be52658c67611a5b0aab1fc4dc9101fc1396e0c0913f72ce0ad82e48fab31.png","Ochakov":"https://wows-gloss-icons.wgcdn.co/icons/vehicle/large/PRSC528_820b73e24dfe7448f2266ffd9d2ac5b7ba3d520ba5471b99b0b4eae4957cd1ba.png","Shigure":"https://wows-gloss-icons.wgcdn.co/icons/vehicle/large/PJSD728_89f5b94de9d8424958f484c22e33e395eade5db51f8f69a4703adb256f470571.png","Tone":"https://wows-gloss-icons.wgcdn.co/icons/vehicle/large/PJSC018_4765f76f0f054bd38b0ea94c41574f71a4c1d793903789ea1caa7460ec3e57b8.png","Marcantonio Colonna":"https://wows-gloss-icons.wgcdn.co/icons/vehicle/large/PISB718_47a475abc960c7e512cda26e6879f485481cfb1d77f09300809e863f0d387182.png","Z-35":"https://wows-gloss-icons.wgcdn.co/icons/vehicle/large/PGSD518_23c28a5b8e7877732e4400679b16543ccb4ef73b2764d2a1f3b1b626697d5df9.png","Hoche":"https://wows-gloss-icons.wgcdn.co/icons/vehicle/large/PFSD718_b0007349452d96dadac030ea4e328939f7e7c2705d75401d558fb9922ba557b3.png","Flandre":"https://wows-gloss-icons.wgcdn.co/icons/vehicle/large/PFSB538_134afd3b7541df220341b1a2ce183b6fa0ebf0b72308e78ddf75b5c97df5be9a.png","Alliance":"https://wows-gloss-icons.wgcdn.co/icons/vehicle/large/PBSS508_283cadbbcc88b117253c5f94e6cf2ba58e8624a7856049214207c6b7b92d61ae.png","Tiger '59":"https://wows-gloss-icons.wgcdn.co/icons/vehicle/large/PBSC518_e6249e2620749f8a165cc982ebc9fa04771d82f02c83ea64016b2a9dfc72d30a.png","Prince of Wales":"https://wows-gloss-icons.wgcdn.co/icons/vehicle/large/PBSB708_45c50429e81373dd4791360f5a563ffaf710e69bc2f8ac651340774333113781.png","Picardie":"https://wows-gloss-icons.wgcdn.co/icons/vehicle/large/PFSB548_9fe641a763d21e7ccd4f6cfc7a0be919a9ec02a0a44e249e9a9c837b0120a702.png","Theseus":"https://wows-gloss-icons.wgcdn.co/icons/vehicle/large/PBSA718_56dfbe9ef381e824107ef882d482181888f85ae21ebfbd71a1bda2460eb6d201.png","Nueve de Julio":"https://wows-gloss-icons.wgcdn.co/icons/vehicle/large/PVSC507_19ce5d47c39a7db135eea9c496cc85538cc1affecc3fe3030007bcdf5e7e1e18.png","Yukon":"https://wows-gloss-icons.wgcdn.co/icons/vehicle/large/PUSB507_d7512b012846e0b4cdaf967d6a1b2cc73634dc14df725691f2c234ef47632866.png","Tashkent '39":"https://wows-gloss-icons.wgcdn.co/icons/vehicle/large/PRSD517_72987973848696602f8b9a45efee8a9dc2d3bc889a09b51e39f5afb35cb28acb.png","Leningrad":"https://wows-gloss-icons.wgcdn.co/icons/vehicle/large/PRSD507_8e6c6f40e4e406f56f8cebeb0dc1dad98bf969029bd6a611a71297ce60a67b1a.png","Arkhangelsk":"https://wows-gloss-icons.wgcdn.co/icons/vehicle/large/PRSB717_c91611435188e72d047ccddb52fc9ed79554c490d5d7aa93d835989bc532c27a.png","Poltava":"https://wows-gloss-icons.wgcdn.co/icons/vehicle/large/PRSB508_cdc5078d2ff1852c08afa2d36c0a1382213d55158562c00eb395c37dbd33a1ba.png","Yūdachi":"https://wows-gloss-icons.wgcdn.co/icons/vehicle/large/PJSD507_8a6f64a8a5f5554217591c719d14c8fdd50fb53210c8af7694af1dbe1a241041.png","Maya":"https://wows-gloss-icons.wgcdn.co/icons/vehicle/large/PJSC517_99ded278576b5fa274222493c4370d2cc19f8c716de1582b6e866ec7eed3acfa.png","Tokachi":"https://wows-gloss-icons.wgcdn.co/icons/vehicle/large/PJSC507_a6c729322f32c6b40ebf01f2115e49406e16424a04554806c3dc815cf4fbc4f6.png","Hyūga":"https://wows-gloss-icons.wgcdn.co/icons/vehicle/large/PJSB517_7b20e447b34fa90cef527c91558e3f0dd46105f59c268b33c3013fa9fc906401.png","Ashitaka":"https://wows-gloss-icons.wgcdn.co/icons/vehicle/large/PJSB507_781dd9d83a29254bd14bfe2d1ff27ea356771cb4749f152e4473e9210b014e37.png","FR25":"https://wows-gloss-icons.wgcdn.co/icons/vehicle/large/PISD507_e52a55de534f7002bfe850dd7a87a27bf54d0e48382b3f67ecc3e87083914711.png","Gorizia":"https://wows-gloss-icons.wgcdn.co/icons/vehicle/large/PISC607_c3242de3df2a89452da0313271acaa28f837b44f3f8ee31197f12da2bf9f6ee9.png","Francesco Ferruccio":"https://wows-gloss-icons.wgcdn.co/icons/vehicle/large/PISC517_a6784596f061351a9e90820ed8bd0ccd8db72718312d92fda3179411712a9f0c.png","Duca degli Abruzzi":"https://wows-gloss-icons.wgcdn.co/icons/vehicle/large/PISC507_6e9c99f789d8de3a81d1d844eda767667338dfbef1ef1898afb46854958adf34.png","Weimar":"https://wows-gloss-icons.wgcdn.co/icons/vehicle/large/PGSC517_83a5cc53dcf088f35c9670eca9cdccfd48533017da1dfd16f97cf83aa00ca61b.png","München":"https://wows-gloss-icons.wgcdn.co/icons/vehicle/large/PGSC507_534f3130ba21b947d13e9cfebe385132b923fd9a62bd222651f696219bce3e77.png","Scharnhorst":"https://wows-gloss-icons.wgcdn.co/icons/vehicle/large/PGSB507_876b156301da29d83335f42329121d8277e2257cb40fa92887beded0b1fc02c3.png","Toulon":"https://wows-gloss-icons.wgcdn.co/icons/vehicle/large/PFSC507_1f3f7d1f336aa70f2f49b4a421dff52cfc4a27b8da185b7a9c72a97c26e5e362.png","Strasbourg":"https://wows-gloss-icons.wgcdn.co/icons/vehicle/large/PFSB507_5ce2d7898a60338800a7662e5429c1ea0f12a7f4364b320620f94fe65c9b92e8.png","Jupiter '42":"https://wows-gloss-icons.wgcdn.co/icons/vehicle/large/PBSD717_391b8d7b3d81eed51b02f40ca5f1be0e5155232190c1142e0b096d2a5cff95d7.png","Royal Sovereign":"https://wows-gloss-icons.wgcdn.co/icons/vehicle/large/PBSB737_7c3622e64aaa17440dec349e7fa7fc8c07a3f6e3a1d73d68eeded8b57c16aeae.png","Rodney":"https://wows-gloss-icons.wgcdn.co/icons/vehicle/large/PBSB717_876d898eb825e298f53672a17d1352ecd32a08af39362ea1cc3957eed035743a.png","Collingwood":"https://wows-gloss-icons.wgcdn.co/icons/vehicle/large/PBSB537_8ac49d3fb713299b9ce909cf67204b6652b5c8d312730ed4e250f22f2a1be302.png","Hood":"https://wows-gloss-icons.wgcdn.co/icons/vehicle/large/PBSB507_25c5552be162332b0c683455c2fd512f4228bcd3aef80e91dee5e5d7166b8a1c.png","Boise":"https://wows-gloss-icons.wgcdn.co/icons/vehicle/large/PASC597_a15257eb12238493146d4377055171c252bd5dea10005888c505a04d0bdc96ef.png","Indianapolis":"https://wows-gloss-icons.wgcdn.co/icons/vehicle/large/PASC507_ad819fb57944438ffc4486fce91e93209264c05f1f6748ee0645270c1f4da463.png","Atlanta":"https://wows-gloss-icons.wgcdn.co/icons/vehicle/large/PASC006_5de10d404e889407d40a3372841b578588b6b0378745f5229115e0b4aaffe855.png","California":"https://wows-gloss-icons.wgcdn.co/icons/vehicle/large/PASB707_5d904e15710a21435baabc408792d7ac1e62b6eab2529d9f7902102bb8a7b133.png","Florida":"https://wows-gloss-icons.wgcdn.co/icons/vehicle/large/PASB517_2a404de09a1f74c9269918cc10ebf33f403a3d1d231d532de376bec491ec310b.png","Xin Zhong Guo '14":"https://wows-gloss-icons.wgcdn.co/icons/vehicle/large/PZSS716_42ed3ae8922c7defb1d4abec742cc57c354adc45932112a52841c7cf2a1c9a27.png","Elli":"https://wows-gloss-icons.wgcdn.co/icons/vehicle/large/PWSC506_041e153ad52128845df39e6d07ce2550eeb448115d8665105c996ca0016afb55.png","Juruá":"https://wows-gloss-icons.wgcdn.co/icons/vehicle/large/PVSD506_639df2bdc51aff339ac5b5358fb969b59da107307fca8952bb1040f4141f622d.png","Mysore":"https://wows-gloss-icons.wgcdn.co/icons/vehicle/large/PUSC516_69949ff400d7ae8e2f010f8a8e49529bcd175dbee672bc6e6ee1a2dcbcc2d106.png","Admiral Makarov":"https://wows-gloss-icons.wgcdn.co/icons/vehicle/large/PRSC606_cd80f821d2abadb3f44ff09609e16368d1920f12ac2136794d6069920cd15f0b.png","Ise":"https://wows-gloss-icons.wgcdn.co/icons/vehicle/large/PJSB526_b3bf9b2918f6225383874431da50ca1b89100eec2350b32a9233e5a48185b4f0.png","Mutsu":"https://wows-gloss-icons.wgcdn.co/icons/vehicle/large/PJSB506_42efeaf3ee94fb8edd5c9571710561ee04dbdd4cd1e1201ce4db4fa8363abc2f.png","Béarn":"https://wows-gloss-icons.wgcdn.co/icons/vehicle/large/PFSA506_1a1917a74265634c044e1deab72a718a172ba2f2b700ba6c9d7e3ddb0730df4e.png","Orion '44":"https://wows-gloss-icons.wgcdn.co/icons/vehicle/large/PBSC716_af2242b85aef9a088317c474e4178cad321f85294a054eb6773a5b68b2483140.png","Monaghan":"https://wows-gloss-icons.wgcdn.co/icons/vehicle/large/PASD506_9937f12bafc41abbf7e3abed2fa45025488b6cf2ac956d9e71c5d71f5963e1c0.png","Rio de Janeiro":"https://wows-gloss-icons.wgcdn.co/icons/vehicle/large/PVSB505_a2b3186ec49c267144f00ea454508f0484724bd306d8b522add5345e761f6c3a.png","Okhotnik":"https://wows-gloss-icons.wgcdn.co/icons/vehicle/large/PRSD505_3fdc2a017e975657f1f5d7ae4554c0a5e82b68fe67e280735c63d950464aaede.png","Krasny Krym":"https://wows-gloss-icons.wgcdn.co/icons/vehicle/large/PRSC505_752516a1b74b3c2966eb1d92b49af84257f8bf43a9fe29a101bdfb331bba90fb.png","Exeter":"https://wows-gloss-icons.wgcdn.co/icons/vehicle/large/PBSC505_232c941b438339bf853a9ec8588889c02cd205c1fe91f784770b5c40a878c0f7.png","Hill":"https://wows-gloss-icons.wgcdn.co/icons/vehicle/large/PASD505_d69732786e89823aeba08aa9177e9e209ae413bad09a4c54905afe4f2d850dbe.png","Sims":"https://wows-gloss-icons.wgcdn.co/icons/vehicle/large/PASD029_334764a4c30f46a1c744ee1a703d420c990f8cdf554845bb5b4135b4cbdcfdac.png","Latouche-Tréville":"https://wows-gloss-icons.wgcdn.co/icons/vehicle/large/PFSC720_dc81c2eb988b338eaab3dbc35931c4de7d6f33f381f9e046478933902ff96ed0.png","Rodina":"https://wows-gloss-icons.wgcdn.co/icons/vehicle/large/PRSB720_b9c64ba58bcfeccc59b9d8fe52b9c7a2de2a279aeb36f676d650291fba0c4d87.png","Tōgasa":"https://wows-gloss-icons.wgcdn.co/icons/vehicle/large/PJSB730_f942c03b421ff1c1d2c264b821cb2aa675516e0eb1b28efc641ff6ab2a383cb8.png","Somers":"https://wows-gloss-icons.wgcdn.co/icons/vehicle/large/PASD510_167602cfd832e883aab1d00addca128d84ca802b7dd63d55a411e7769aae249a.png","Rodina G":"https://wows-gloss-icons.wgcdn.co/icons/vehicle/large/PRSB720_b9c64ba58bcfeccc59b9d8fe52b9c7a2de2a279aeb36f676d650291fba0c4d87.png","Tōgasa G":"https://wows-gloss-icons.wgcdn.co/icons/vehicle/large/PJSB730_f942c03b421ff1c1d2c264b821cb2aa675516e0eb1b28efc641ff6ab2a383cb8.png","Somers G":"https://wows-gloss-icons.wgcdn.co/icons/vehicle/large/PASD510_167602cfd832e883aab1d00addca128d84ca802b7dd63d55a411e7769aae249a.png","Tywysog Cymru":"https://wows-gloss-icons.wgcdn.co/icons/vehicle/large/PBSB708_45c50429e81373dd4791360f5a563ffaf710e69bc2f8ac651340774333113781.png","New Jersey BF":"https://wows-gloss-icons.wgcdn.co/icons/vehicle/large/PASB740_0bf63126aa313b8c636a3378c5dff646bbd817b4d45cb4b8abddcf9abf594c84.png"};
+/* ---------- CELEBRATION (rarity-scaled) ---------- */
+function celebrationTier(s){
+  if(!s) return 0;
+  if(s.group==='bf') return 3;
+  if(s.group==='golden'||s.group==='legacy') return 2;
+  if(s.group==='rare') return 1;
+  return 0;
+}
+function hideCelebration(){ var b=document.getElementById('celebrateBanner'); if(b) b.classList.remove('show'); var o=document.getElementById('shipReveal'); if(o) o.classList.remove('show'); }
+function showCelebration(tier, ship){
+  var o=document.getElementById('shipReveal'); if(!o) return;
+  var kind=tier===3?'bf':tier===2?'gold':'rare';
+  var title=tier===3? L('🔥 BATTLE FORGED 🔥','🔥 战火锻造 🔥') : tier===2? L('✦ GOLDEN SHIP ✦','✦ 金色舰船 ✦') : L('⭐ RARE SHIP ⭐','⭐ 稀有舰船 ⭐');
+  var sub=tier===3? L('The rarest prize in the chain','套娃最深处的珍品') : tier===2? L('A golden prize','金色珍品') : L('A rare prize','稀有珍品');
+  var url=(typeof SHIP_IMG!=='undefined' && ship && SHIP_IMG[ship.name])||'';
+  o.className='ship-reveal tier-'+kind;
+  o.innerHTML='<div class="sr-bg"></div>'
+    +(url? '<div class="sr-imgwrap"><img class="sr-img" alt="" src="'+url+'"><div class="sr-shine"></div></div>' : '')
+    +'<div class="sr-txt"><div class="sr-title">'+title+'</div><div class="sr-name">'+shipDisplayHtml(ship)+(ship.tier?' · '+roman(ship.tier):'')+'</div><div class="sr-sub">'+sub+'</div><div class="sr-hint">'+L('CLICK TO CLOSE','点击任意处关闭')+'</div></div>';
+  if(showCelebration._t) clearTimeout(showCelebration._t);
+  var shown=false;
+  function go(){
+    if(shown) return; shown=true;
+    requestAnimationFrame(function(){ o.classList.add('show'); });
+    if(tier===3){ startFX('fireworks', 4200); }
+    else if(tier===2){ startFX('confetti', 2600); showCelebration._t=setTimeout(hideCelebration, 4600); }
+    else { showCelebration._t=setTimeout(hideCelebration, 3600); }
+  }
+  if(url){ var pre=new Image(); pre.onload=go; pre.onerror=go; pre.src=url; setTimeout(go, 900); }
+  else go();
+}
+(function(){ var o=document.getElementById('shipReveal'); if(o) o.addEventListener('click', hideCelebration); document.addEventListener('keydown', function(e){ if(e.key==='Escape') hideCelebration(); }); })();
+function startFX(kind, dur){
+  var old=document.getElementById('fwCanvas'); if(old) old.remove();
+  var cv=document.createElement('canvas'); cv.id='fwCanvas'; cv.style.zIndex='10001'; document.body.appendChild(cv);
+  var ctx=cv.getContext('2d'); cv.width=window.innerWidth; cv.height=window.innerHeight;
+  var parts=[], rockets=[], start=performance.now(), lastSpawn=0;
+  var colors=kind==='fireworks'? ['#ffb347','#ff512f','#ff2e63','#ffd700','#ffffff'] : ['#ffd700','#ffec8b','#f5c542','#fff3c4'];
+  function spawnRocket(){ rockets.push({x:Math.random()*cv.width*0.8+cv.width*0.1, y:cv.height, vx:(Math.random()-0.5)*1.6, vy:-(Math.random()*3.2+8.4), target:Math.random()*cv.height*0.38+40, color:colors[Math.floor(Math.random()*colors.length)]}); }
+  function explode(x,y,color){ for(var i=0;i<70;i++){ var a=Math.random()*Math.PI*2, sp=Math.random()*4.4+0.6; parts.push({x:x,y:y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp-0.4,life:1,decay:Math.random()*0.012+0.008,color:color,size:Math.random()*2.2+1.2,confetti:false}); } }
+  function frame(now){
+    var t=now-start;
+    ctx.clearRect(0,0,cv.width,cv.height);
+    if(kind==='fireworks'){
+      if(t<dur-900 && now-lastSpawn>170){ spawnRocket(); lastSpawn=now; }
+      rockets=rockets.filter(function(r){ r.x+=r.vx; r.y+=r.vy; r.vy+=0.05; ctx.globalAlpha=1; ctx.fillStyle=r.color; ctx.beginPath(); ctx.arc(r.x,r.y,2.4,0,7); ctx.fill(); if(r.y<=r.target||r.vy>=0){ explode(r.x,r.y,r.color); return false; } return true; });
+    } else {
+      if(t<dur-600 && now-lastSpawn>90){ lastSpawn=now; for(var k=0;k<6;k++) parts.push({x:Math.random()*cv.width, y:-12, vx:(Math.random()-0.5)*1.2, vy:Math.random()*2+1.6, life:1, decay:0.004, color:colors[Math.floor(Math.random()*colors.length)], size:Math.random()*3+2, confetti:true}); }
+    }
+    parts=parts.filter(function(p){ p.x+=p.vx; p.y+=p.vy; if(p.confetti){ p.vy=Math.min(p.vy+0.02,2.6); p.x+=Math.sin((now+p.y)/90)*0.6; } else { p.vy+=0.035; p.vx*=0.985; p.vy*=0.985; } p.life-=p.decay; if(p.life<=0||p.y>cv.height+20) return false; ctx.globalAlpha=Math.max(p.life,0); ctx.fillStyle=p.color; ctx.beginPath(); ctx.arc(p.x,p.y,p.size,0,7); ctx.fill(); return true; });
+    ctx.globalAlpha=1;
+    if(t<dur || parts.length || rockets.length){ requestAnimationFrame(frame); } else { cv.remove(); }
+  }
+  requestAnimationFrame(frame);
+}
+function rollGoldenBatch(){
+  var guard=0;
+  while(session.goldenInventory>0 && guard<1000){ rollGoldenOne(); guard++; }
+  renderSession(true);
+}
+function renderSession(pop){
+  var pityOnNow=document.getElementById('inPity').checked;
+  var santaPoolEmpty=!activeGroups(session.pools).length;
+  function pillText(count, cap){ if(santaPoolEmpty) return L('Fleet complete','船已齐'); return pityOnNow? count+' / '+cap : String(count); }
+  document.getElementById('pityGift').textContent=pillText(session.counters.gift,100);
+  document.getElementById('pityMega').textContent=pillText(session.counters.mega,15);
+  document.getElementById('pityUltra').textContent=pillText(session.counters.ultra,7);
+  var pg=document.getElementById('pityGolden'); if(pg) pg.textContent= pityOnNow? session.goldenShipLess+' / 10' : String(session.goldenShipLess);
+  document.getElementById('sessOpened').textContent=session.total;
+  (function(){
+    var ob=session.openedByType||{gift:0,mega:0,ultra:0};
+    var doub=packCost(typeByKey('gift').packDbl, ob.gift||0)+packCost(typeByKey('mega').packDbl, ob.mega||0);
+    var ultraDollars=packCost(typeByKey('ultra').packUsd, ob.ultra||0);
+    var won=session.rewards? session.rewards.doubloons : 0;
+    var net=doub-won;
+    var combinedNet=net/250+ultraDollars;
+    var cd=document.getElementById('costDoubloons'); if(cd) cd.textContent=fmtNum(doub)+L(' doubloons',' 达布隆');
+    var cdd=document.getElementById('costDoubloonDollars'); if(cdd) cdd.textContent='(≈ $'+fmtMoney(doub/250)+')';
+    var cw=document.getElementById('costWonBack'); if(cw) cw.textContent=fmtNum(won)+L(' doubloons',' 达布隆');
+    var cn=document.getElementById('costNet'); if(cn) cn.textContent=fmtNum(net)+L(' doubloons',' 达布隆');
+    var cnd=document.getElementById('costNetDollars'); if(cnd) cnd.textContent='(≈ $'+fmtMoney(net/250)+')';
+    var cu=document.getElementById('costUltraDollars'); if(cu) cu.textContent='$'+fmtMoney(ultraDollars);
+    var cc2=document.getElementById('costCombined'); if(cc2) cc2.textContent='≈ $'+fmtMoney(combinedNet);
+    var cb=document.getElementById('costBreakdown'); if(cb) cb.textContent=typeShort(typeByKey('gift'))+' ×'+(ob.gift||0)+' · '+typeShort(typeByKey('mega'))+' ×'+(ob.mega||0)+' · '+typeShort(typeByKey('ultra'))+' ×'+(ob.ultra||0);
+    if(typeof updateBatchCost==='function') updateBatchCost();
+  })();
+  // Golden Gift inventory + buttons
+  (function(){
+    var gc=document.getElementById('goldenCount');
+    if(gc) gc.textContent='×'+session.goldenInventory;
+    var gb=document.getElementById('goldenBar'); if(gb) gb.classList.toggle('has', session.goldenInventory>0);
+    var b1=document.getElementById('btnGolden'); if(b1) b1.disabled=session.goldenInventory<=0;
+    var b2=document.getElementById('btnGoldenAll'); if(b2) b2.disabled=session.goldenInventory<=0;
+    var bc=document.getElementById('bfCount'); if(bc) bc.textContent='×'+session.bfInventory;
+    var bb=document.getElementById('bfBar'); if(bb) bb.classList.toggle('has', session.bfInventory>0);
+    var bf1=document.getElementById('btnBF'); if(bf1) bf1.disabled=session.bfInventory<=0;
+    var bf2=document.getElementById('btnBFAll'); if(bf2) bf2.disabled=session.bfInventory<=0;
+  })();
+  // Rewards collected panel
+  (function(){
+    var rp=document.getElementById('rewardsPanel'); if(!rp) return;
+    var r=session.rewards;
+    var tiles=[
+      [L('Doubloons won','已赢达布隆'), fmtNum(r.doubloons), L('offsets your spend','抵扣花费')],
+      [L('Golden Gifts','金色礼物补给箱'), fmtNum(r.goldenWon), ''],
+      [L('Battle Forged','战火锻造箱'), fmtNum(r.bfWon), ''],
+      [L('Coal','煤炭'), fmtNum(r.coal), ''],
+      [L('Credits','银币'), fmtNum(r.credits), ''],
+      [L('Premium time','高级账号'), fmtNum(r.premium)+L(' days',' 天'), ''],
+      [L('Elite Commander XP','精英指挥官经验'), fmtNum(r.eliteXP), ''],
+      [L('Research Points','研发点'), fmtNum(r.rp), L('from Golden / BF','来自金色/锻造箱')],
+      [L('Steel','钢铁'), fmtNum(r.steel), L('Golden / BF / fleet complete','金色/锻造/船齐补偿')],
+      [L('Port Slots','港口船位'), fmtNum(r.portSlots), ''],
+      [L('Uncommon bonuses','普通经济加成'), fmtNum(r.uncommon), L('total items','总数量')],
+      [L('Rare bonuses','稀有经济加成'), fmtNum(r.rare), L('total items','总数量')],
+      [L('Epic bonuses','史诗经济加成'), fmtNum(r.epic), L('total items','总数量')],
+      [L('Legendary bonuses','传奇经济加成'), fmtNum(r.legendary), L('total items','总数量')],
+      [L('Signal flags','信号旗'), fmtNum(r.signals), L('total flags','总数量')]
+    ];
+    rp.innerHTML=tiles.map(function(t){ return '<div class="reward-tile"><small>'+t[0]+'</small><strong>'+t[1]+'</strong>'+(t[2]?'<span>'+t[2]+'</span>':'')+'</div>'; }).join('');
+  })();
+  document.getElementById('remRare').textContent=session.pools.rare.length+' / '+FULL_RARE.length;
+  document.getElementById('remMid').textContent=session.pools.mid.length+' / '+FULL_MID.length;
+  document.getElementById('remCommon').textContent=session.pools.common.length+' / '+FULL_COMMON.length;
+  // Live effective odds — total ship chance never changes, exhausted groups redistribute
+  TYPES.forEach(function(t){
+    var eff=effectiveProbs(t, session.pools);
+    var el=document.getElementById('effDesc-'+t.key);
+    if(el){
+      if(!eff.active.length) el.textContent=fmtEff(totalShipProb(t))+L(' ship',' 出船');
+      else el.textContent=fmtEff(eff.total)+L(' ship',' 出船');
+    }
+  });
+  (function(){
+    var sel=null; for(var i=0;i<TYPES.length;i++) if(TYPES[i].key===selectedType) sel=TYPES[i];
+    if(sel){
+      var eff2=effectiveProbs(sel, session.pools);
+      var lo=document.getElementById('liveOdds');
+      if(lo){
+        if(!eff2.active.length) lo.innerHTML='';
+        else lo.innerHTML=typeShort(sel)+': <b>'+fmtEff(eff2.rare)+' R · '+fmtEff(eff2.mid)+' M · '+fmtEff(eff2.common)+' C</b>';
+      }
+    }
+  })();
+  var rc=session.acquired.filter(function(s){return s.group==='rare'}).length;
+  var mc=session.acquired.filter(function(s){return s.group==='mid'}).length;
+  var cc=session.acquired.filter(function(s){return s.group==='common'}).length;
+  var gc2=session.acquired.filter(function(s){return s.group==='golden'||s.group==='legacy'}).length+goldenPreOwnCount();
+  var bfc=session.acquired.filter(function(s){return s.group==='bf'}).length;
+  document.getElementById('acqTitle').textContent=L('Your ships — ','你的舰船 — ')+(session.acquired.length+goldenPreOwnCount())+(session.acquired.length?'  ·  '+rc+' '+grpLabel('rare')+' · '+mc+' '+grpLabel('mid')+' · '+cc+' '+grpLabel('common')+(gc2?' · '+gc2+' '+L('Golden','金色'):'')+(bfc?' · '+bfc+' '+grpLabel('bf'):''):'');
+  var last=session.log[0];
+  var lr=document.getElementById('lastRoll');
+  if(!last) lr.textContent=L('No rolls yet.','暂无记录。');
+  else if(last.ship) lr.innerHTML=L('Last roll (#','上次开箱（#')+last.n+L(', ','，')+typeShort(last.type)+L('): ','）：')+(last.ship.group==='bf'? '<b class="bf-win">🔥 '+shipDisplayHtml(last.ship)+'</b>' : '<b style="color:#fff">'+shipDisplayHtml(last.ship)+'</b>')+(last.ship.tier?' — '+roman(last.ship.tier):'')+' '+grpLabel(last.ship.group)+(last.forced? L(' · PITY drop',' · 保底') : '');
+  else lr.innerHTML=L('Last roll (#','上次开箱（#')+last.n+L(', ','，')+typeShort(last.type)+L('): ','）：')+'<b style="color:#fff">'+txt(last.headline)+'</b>'+(last.forced? L(' · PITY drop',' · 保底') : '')+(last.extras&&last.extras.length?' · '+last.extras.map(function(x){return txt(x)}).join(' · '):'');
+  // log
+  var logEl=document.getElementById('rollLog');
+  if(!session.log.length){ logEl.innerHTML='<li><span class="noship">—</span></li>'; }
+  else{
+    logEl.innerHTML=session.log.slice(0,200).map(function(e){
+      if(e.ship) return '<li'+(e.ship.group==='bf'?' class="bf-row"':'')+'><span class="num">'+e.n+'</span><span class="tag">'+typeShort(e.type)+'</span><span class="ship-win'+(e.ship.group==='bf'?' bf-win':'')+'" style="flex:1">'+(e.ship.group==='bf'?'🔥 ':'')+shipDisplayHtml(e.ship)+(e.ship.tier?' <small style="color:var(--muted)">'+roman(e.ship.tier)+'</small>':'')+'</span><span class="grp '+e.ship.group+'">'+grpLabel(e.ship.group)+'</span>'+(e.forced?'<span class="tag">'+L('PITY','保底')+'</span>':'')+'</li>';
+      var extra=(e.extras&&e.extras.length)? '<span class="log-extra">'+e.extras.map(function(x){return txt(x)}).join('<br>')+'</span>' : '';
+      return '<li><span class="num">'+e.n+'</span><span class="tag">'+typeShort(e.type)+'</span><span style="flex:1"><span class="'+((e.goldenWin||e.bfWin)?'golden-win':'reward-txt')+'">'+txt(e.headline)+'</span>'+extra+'</span>'+(e.forced?'<span class="tag">'+L('PITY','保底')+'</span>':'')+'</li>';
+    }).join('')+(session.log.length>200?'<li><span class="noship">…</span></li>':'');
+  }
+  // acquired panel grouped
+  var panel=document.getElementById('acquiredPanel');
+  if(!session.acquired.length && !goldenPreOwnCount()){ panel.innerHTML='<p class="empty">'+L('No ships yet — open a container.','还没有舰船 — 打开一个补给箱吧。')+'</p>'; }
+  else{
+    var html='';
+    [['rare',grpLabel('rare')],['mid',grpLabel('mid')],['common',grpLabel('common')],['golden',grpLabel('golden')],['legacy',grpLabel('legacy')],['bf',grpLabel('bf')]].forEach(function(gd){
+      var ships=session.acquired.filter(function(s){return s.group===gd[0]});
+      if(gd[0]==='golden') ships=preOwnedGoldenShips().concat(ships);
+      if(!ships.length) return;
+      html+='<div class="acq-group"><h4>'+gd[1]+' — '+ships.length+'</h4><div class="acq-chips">'+ships.map(function(s){return '<span class="acq-chip'+(s.group==='bf'?' bf-chip':'')+'">'+(s.group==='bf'?'🔥 ':'')+shipDisplayHtml(s)+(s.tier?' · '+roman(s.tier):'')+(s.pre?' <span class="tag">'+L('Convoy','活动兑换')+'</span>':'')+'</span>'}).join('')+'</div></div>';
+    });
+    panel.innerHTML=html;
+  }
+  (function(){
+    var from=session.celebrated||0;
+    if(session.acquired.length>from){
+      var best=null, bestTier=0;
+      for(var ci=from;ci<session.acquired.length;ci++){ var tr=celebrationTier(session.acquired[ci]); if(tr>bestTier){ bestTier=tr; best=session.acquired[ci]; } }
+      session.celebrated=session.acquired.length;
+      if(best && bestTier>0) showCelebration(bestTier, best);
+    } else if(session.acquired.length<from){ session.celebrated=session.acquired.length; }
+  })();
+  if(pop){ var h=document.getElementById('rollHero'); h.classList.remove('pop'); void h.offsetWidth; h.classList.add('pop'); }
+}
+/* ---------- language switching ---------- */
+function setT(id, s){ var e=document.getElementById(id); if(e) e.textContent=s; }
+function applyLang(){
+  document.documentElement.lang = LANG==='zh' ? 'zh-CN' : 'en';
+  document.title = L('Christmas Container Simulator','圣诞补给箱模拟器');
+  var zb=document.getElementById('langZh'), eb=document.getElementById('langEn');
+  if(zb) zb.classList.toggle('active', LANG==='zh');
+  if(eb) eb.classList.toggle('active', LANG==='en');
+  var pt=document.getElementById('pageTitle'); if(pt) pt.innerHTML=L('Santa\'s Containers <span>🎄</span>','圣诞补给箱 <span>🎄</span>');
+  setT('subTitle', L('Open Santa containers and see which ships drop for you.','打开圣诞补给箱，看看你能开出哪些舰船。'));
+  setT('loginLbl', L('Your port:','你的港口：'));
+  setT('loginHint', L('Log in to sync your port automatically','登录后自动同步你的港口'));
+  var plEl=document.getElementById('pasteLink'); if(plEl) plEl.placeholder=L('Paste the link from the page you land on after WG login','把登录后跳转页面的链接粘贴到这里');
+  setT('btnPasteSync', L('Sync port','同步港口'));
+  document.querySelectorAll('[data-login-realm]').forEach(function(b){ b.textContent=L('Log in · ','登录 · ')+realmLabel(b.getAttribute('data-login-realm')); });
+  setT('btnLogout', L('Log out','退出登录'));
+  setT('tn-gift', typeLabel(typeByKey('gift')));
+  setT('tn-mega', typeLabel(typeByKey('mega')));
+  setT('tn-ultra', typeLabel(typeByKey('ultra')));
+  setT('price-gift', L('250 doubloons · ≈ $1','250 达布隆 · ≈ $1'));
+  setT('price-mega', L('1,250 doubloons · ≈ $5','1,250 达布隆 · ≈ $5'));
+  setT('price-ultra', L('$10 each','每个 $10'));
+  setT('btnRoll', L('🎲 Open '+openCount(),'🎲 打开 '+openCount()+' 个'));
+  setT('btnRoll10', L('Open 10','打开 10 个'));
+  setT('btnReset', L('↺ Reset','↺ 重置'));
+  setT('pityLbl', L('Pity','保底'));
+  setT('pl-gift', typeShort(typeByKey('gift')));
+  setT('pl-mega', typeShort(typeByKey('mega')));
+  setT('pl-ultra', typeShort(typeByKey('ultra')));
+  setT('pl-golden', typeShort(GOLDEN_TYPE));
+  setT('costOpenedLbl', L('Opened','已打开'));
+  setT('costWonLbl', L('won back','赢回'));
+  setT('costNetLbl', L('net','净花费'));
+  setT('costUltraLbl', typeShort(typeByKey('ultra')));
+  setT('goldenTitle', L('✦ Golden Gift','✦ 金色礼物补给箱'));
+  setT('btnGolden', L('Open','打开'));
+  setT('btnGoldenAll', L('Open All','全部打开'));
+  setT('bfTitle', L('🔥 Battle Forged Premium','🔥 战火锻造高级补给箱'));
+  setT('btnBF', L('Open','打开'));
+  setT('btnBFAll', L('Open All','全部打开'));
+  setT('remLblRare', L('Rare left','稀有剩余'));
+  setT('remLblMid', L('Mid left','中级剩余'));
+  setT('remLblCommon', L('Common left','普通剩余'));
+  setT('rewardsTitle', L('Rewards','奖励'));
+  setT('btnShare', L('📸 Create share image','📸 生成分享图'));
+  setT('shareHint', L('Turn this run into a picture with a QR code — easy to post anywhere.','把这次战报生成一张带二维码的图片，发到论坛、群里都方便。'));
+  setT('shareDownload', L('⬇ Download image','⬇ 下载图片'));
+  setT('shareNative', L('Share…','分享…'));
+  setT('shareClose', L('Close','关闭'));
+  setT('shareTip', L('On mobile you can also long-press the image to save or forward it.','手机上也可以长按图片保存或转发。'));
+  setT('rollsTitle', L('Rolls','开箱记录'));
+  setT('howSummary', L('How it works','玩法说明'));
+  var howEn=['Won ships leave the pool — no duplicates.','If a group runs out, its chance moves to the other groups; the total ship % never changes. Once you own every ship, ship drops pay Steel instead: Gift 250 · Mega/Ultra 1,250.','Pity is assumed from last year: Gift 100 · Mega 15 · Ultra 7 · Golden 10 ship-less in a row.','Golden Gifts drop from Santa containers and open separately.','Prices are last year\'s, including shop bundles (8-pack −15%, 20-pack −25%; Ultra 8 for $67.98, 20 for $149) — 15.11 prices aren\'t published yet.','Login fetches your port via Wargaming and matches ships by exact ID; variants count separately. Golden ships aren\'t filtered by login.','Rates from the Closed Test 15.11 blog — may change before live.','Own all 7 Golden ships and Golden ship drops become Battle Forged Premium containers instead (10% per Golden Gift; the Golden pity then guarantees one on the 10th). Battle Forged: 50% New Jersey BF, guaranteed on the 3rd; if you already own her, 2,500 Steel instead.'];
+  var howZh=['已获得的舰船会离开船池 — 不会重复掉落。','某组舰船抽完后，其概率会转移到其他组；总出船概率不变。全部船抽齐后，出船改为钢铁补偿：礼物 250 · 超级/特级 1,250。','保底按去年规则假设：礼物 100 · 超级 15 · 特级 7 · 金色 10 次无船触发。','金色礼物补给箱从圣诞补给箱中掉落，单独开启。','价格为去年价格，含商店捆绑包（8 个 −15%、20 个 −25%；特级 8 个 $67.98、20 个 $149）— 15.11 价格尚未公布。','登录后通过 Wargaming 获取你的港口，按确切 ID 匹配舰船；不同版本分别计算。金色舰船不按登录过滤。','概率来自封闭测试 15.11 博客 — 正式上线前可能调整。','集齐金色礼物全部 7 艘船后，金色箱的出船奖励改为战火锻造高级补给箱（每个金色箱 10%；此时金色保底改为第 10 个金色箱必出锻造箱）；锻造箱 50% 出新泽西 BF，第 3 个保底必出，已有时改为 2,500 钢铁。'];
+  for(var i=0;i<8;i++) setT('how'+(i+1), LANG==='zh'? howZh[i] : howEn[i]);
+  setT('convoyTitle', L('🎁 Holiday Convoy exchange (counts as owned)','🎁 节日护航队兑换（视为已拥有）'));
+  setT('convoyHint', L('From Update 15.11, these three Golden ships can also be earned via the Holiday Convoy event. Tick the ones you plan to exchange for — the sim treats them as owned: they will not drop from Golden Gifts, and once all three normal Golden ships are owned, the Legacy chance rises to 10%. Changing a tick resets the session.','15.11 起这三艘金色船也可通过节日护航队活动兑换。勾选你打算换的 — 模拟时按已拥有处理：不再从金色箱掉落；三艘普通金色船全部拥有后，遗产船概率升至 10%。修改勾选会重置当前模拟。'));
+  document.querySelectorAll('.convoyChk').forEach(function(c){ var sp=c.parentElement.querySelector('span'); if(sp) sp.textContent= LANG==='zh'? (GOLDEN_ZH[c.getAttribute('data-ship')]+' '+c.getAttribute('data-ship')) : c.getAttribute('data-ship'); });
+  setT('poolFoldTitle', L('🎛 Set your fleet manually (CN server / no WG account)','🎛 手动设置船池（国服 / 无国际服账号）'));
+  setT('poolFoldHint', L('Can\'t sync by logging in (e.g. CN-server players)? Tick the ships you already own here — the sim treats them as owned, so they won\'t drop. Ticks are saved on this device; when logged in, your port takes over. Changing a tick resets the session.','无法登录同步（比如国服玩家）时，在这里勾选你已经拥有的船 — 模拟时按已拥有处理，不会掉落。勾选会自动保存在本机；登录后以港口为准。修改勾选会重置当前模拟。'));
+  setT('poolFoldNote', L('Logged in · using your port','已登录 · 以港口为准'));
+  setT('poolClearAll', L('Clear all','清空全部'));
+  setT('poolCollapseBtn', L('Collapse ▴','收起 ▴'));
+  var pse=document.getElementById('poolSearch'); if(pse) pse.setAttribute('placeholder', L('Search ships (Chinese / English)…','搜索船名（中文 / 英文）…'));
+  if(typeof syncManualLang==='function') syncManualLang();
+  var ix=document.getElementById('inOpenX'); if(ix) ix.setAttribute('aria-label', L('Batch size','数量'));
+}
+function setLang(l){
+  if(l!=='zh'&&l!=='en') return;
+  LANG=l;
+  try{ localStorage.setItem(LANG_KEY, l); }catch(e){}
+  applyLang(); renderLoginPanel(); renderStateChips();
+  if(session) renderSession();
+}
+document.querySelectorAll('.type-btn').forEach(function(b){
+  b.addEventListener('click',function(){
+    document.querySelectorAll('.type-btn').forEach(function(x){x.classList.remove('active')});
+    b.classList.add('active'); selectedType=b.getAttribute('data-type'); renderSession();
+  });
+});
+document.getElementById('btnRoll').addEventListener('click',function(){ rollBatch(openCount()); });
+document.getElementById('btnRoll10').addEventListener('click',function(){ rollBatch(10); });
+document.getElementById('btnReset').addEventListener('click',function(){ resetSession(); });
+document.querySelectorAll('.convoyChk').forEach(function(c){ c.addEventListener('change',function(){ var n=c.getAttribute('data-ship'); if(c.checked) convoyOwn[n]=true; else delete convoyOwn[n]; saveConvoy(); resetSession(); }); });
+document.getElementById('btnGolden').addEventListener('click',function(){ rollGoldenOne(); renderSession(true); });
+document.getElementById('btnGoldenAll').addEventListener('click',function(){ rollGoldenBatch(); });
+document.getElementById('btnBF').addEventListener('click',function(){ rollBFOne(); renderSession(true); });
+document.getElementById('btnBFAll').addEventListener('click',function(){ rollBFBatch(); });
+var cbEl=document.getElementById('celebrateBanner'); if(cbEl) cbEl.addEventListener('click', hideCelebration);
+document.getElementById('inOpenX').addEventListener('input',function(){ updateBatchCost(); });
+document.getElementById('inOpenX').addEventListener('change',function(){ var el=document.getElementById('inOpenX'); var n=openCount(); if(String(n)!==el.value) el.value=n; updateBatchCost(); });
+document.getElementById('inPity').addEventListener('change',function(){ renderSession(); });
+document.querySelectorAll('[data-login-realm]').forEach(function(b){ b.addEventListener('click',function(){ doLogin(b.getAttribute('data-login-realm')); }); });
+var loBtn=document.getElementById('btnLogout'); if(loBtn) loBtn.addEventListener('click',function(){ doLogout(); });
+var psBtn=document.getElementById('btnPasteSync'); if(psBtn) psBtn.addEventListener('click',function(){ handlePastedLink(); });
+var plInp=document.getElementById('pasteLink'); if(plInp) plInp.addEventListener('keydown',function(ev){ if(ev.key==='Enter'){ ev.preventDefault(); handlePastedLink(); } });
+var lzBtn=document.getElementById('langZh'); if(lzBtn) lzBtn.addEventListener('click',function(){ setLang('zh'); });
+var leBtn=document.getElementById('langEn'); if(leBtn) leBtn.addEventListener('click',function(){ setLang('en'); });
+/* ---------- SHARE CARD (results image with QR) ---------- */
+var SITE_URL='https://zhouxf53.github.io/wows-santa-simulator/en';
+var shareBlob=null;
+function grpColor(g){ return g==='rare'?'#e8b34d':g==='mid'?'#6fc3df':(g==='golden'||g==='legacy')?'#ffd76a':g==='bf'?'#ff6a3d':'#a8b6c2'; }
+function fitText(ctx, text, maxW){ if(ctx.measureText(text).width<=maxW) return text; var t=text; while(t.length>1 && ctx.measureText(t+'…').width>maxW) t=t.slice(0,-1); return t+'…'; }
+function rrPath(ctx,x,y,w,h,r){ ctx.beginPath(); ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r); ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath(); }
+function buildShareCard(){
+  var W=1080, M=64;
+  var ships=session.acquired.slice();
+  var maxList=30, shown=ships.slice(0,maxList), extra=ships.length-shown.length;
+  var rows=Math.max(1, Math.ceil(shown.length/2));
+  var hasBF=ships.some(function(s){return s.group==='bf'});
+  var statsTop=262, rowH=58;
+  var statsEnd=statsTop+6*rowH;
+  var bfH=hasBF? 106:0;
+  var listHeadY=statsEnd+bfH+44;
+  var listTop=listHeadY+54;
+  var listEnd=listTop+rows*44+(extra>0?40:0);
+  var footerTop=listEnd+38;
+  var H=footerTop+216+58;
+  var cv=document.createElement('canvas'); cv.width=W; cv.height=H;
+  var ctx=cv.getContext('2d');
+  ctx.fillStyle='#0c1218'; ctx.fillRect(0,0,W,H);
+  ctx.strokeStyle='rgba(232,179,77,.8)'; ctx.lineWidth=3; ctx.strokeRect(26.5,26.5,W-53,H-53);
+  ctx.textBaseline='alphabetic';
+  ctx.fillStyle='#e8eef3'; ctx.font='900 54px system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif';
+  ctx.fillText(L("Santa's Gift — Results","圣诞补给箱 · 开箱战报"), M, 118);
+  ctx.fillStyle='#9db0c2'; ctx.font='27px system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif';
+  ctx.fillText(new Date().toLocaleDateString(LANG==='zh'?'zh-CN':'en-US')+L(' · Santa containers (closed-test data)',' · 圣诞补给箱（内测数据）'), M, 168);
+  ctx.strokeStyle='#233243'; ctx.lineWidth=2; ctx.beginPath(); ctx.moveTo(M,206); ctx.lineTo(W-M,206); ctx.stroke();
+  var ob=session.openedByType, r=session.rewards;
+  var totalOpened=(ob.gift||0)+(ob.mega||0)+(ob.ultra||0)+session.goldenOpened+session.bfOpened;
+  var spentD=packCost(typeByKey('gift').packDbl, ob.gift||0)+packCost(typeByKey('mega').packDbl, ob.mega||0), ultraUsd=packCost(typeByKey('ultra').packUsd, ob.ultra||0), totalUsd=spentD/250+ultraUsd;
+  var costParts=[]; if(spentD) costParts.push(fmtNum(spentD)+L(' doubloons',' 达布隆')); if(ultraUsd) costParts.push('$'+fmtMoney(ultraUsd));
+  var costStr=costParts.join(' + ')+' · ≈ $'+fmtMoney(totalUsd);
+  function cnt(g){ return ships.filter(function(s){return s.group===g}).length; }
+  var gc=cnt('golden')+cnt('legacy');
+  var statRows=[
+    [L('Opened','已打开'), fmtNum(totalOpened)+L(' total',' 个')+' — '+L('Gift','礼物')+' '+(ob.gift||0)+' · '+L('Mega','超级')+' '+(ob.mega||0)+' · '+L('Ultra','特级')+' '+(ob.ultra||0)+' · '+L('Golden','金色')+' '+session.goldenOpened+' · '+L('BF','锻造')+' '+session.bfOpened],
+    [L('Spent','花费'), costStr],
+    [L('Ships','出船'), fmtNum(ships.length)+L(' ships',' 艘')+' — '+L('Rare','稀有')+' '+cnt('rare')+' · '+L('Mid','中级')+' '+cnt('mid')+' · '+L('Common','普通')+' '+cnt('common')+' · '+L('Golden','金色')+' '+gc+(cnt('bf')?' · BF ★':'')],
+    [L('Collection','收藏'), (function(){ var ini=session.initial||{rare:42,mid:53,common:48}; var santaWon=cnt('rare')+cnt('mid')+cnt('common'); var ownedNow=143-(ini.rare+ini.mid+ini.common)+santaWon; var s=L('Santa pool ','圣诞池已集 ')+ownedNow+'/143'+(santaWon? L(' (+','（本次 +')+santaWon+(LANG==='zh'?'）':' this run)') : ''); s+=' · '+L('Golden ships ','金色船 ')+(gc+goldenPreOwnCount())+'/7'; if(typeof portIdSet!=='undefined'&&portIdSet) s+=' · '+L('Port: ','港口总舰船 ')+fmtNum(Object.keys(portIdSet).length)+L(' ships',' 艘'); return s; })()],
+    [L('Loot','资源'), L('Steel ','钢铁 ')+fmtNum(r.steel)+' · '+L('Coal ','煤炭 ')+fmtNum(r.coal)],
+    [L('More','其他'), L('Doubloons back ','赢回达布隆 ')+fmtNum(r.doubloons)+' · '+L('RP ','研发点 ')+fmtNum(r.rp)+' · '+L('Premium ','高级账号 ')+fmtNum(r.premium)+L(' days',' 天')]
+  ];
+  statRows.forEach(function(row,i){ var y=statsTop+i*rowH;
+    ctx.fillStyle='#9db0c2'; ctx.font='600 27px system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif'; ctx.fillText(row[0], M, y);
+    ctx.fillStyle='#ffffff'; ctx.font='700 30px system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif'; ctx.fillText(fitText(ctx,row[1],W-M-190), M+170, y);
+  });
+  var santaOpened=(ob.gift||0)+(ob.mega||0)+(ob.ultra||0);
+  if(santaOpened>=5){
+    var expShips=(ob.gift||0)*0.025+(ob.mega||0)*0.16+(ob.ultra||0)*0.32;
+    var santaWon2=cnt('rare')+cnt('mid')+cnt('common');
+    var ratio=expShips>0? santaWon2/expShips : 0;
+    var luckTitle= ratio>=2? L('BLESSED','天选欧皇') : ratio>=1.4? L('Very lucky','欧皇附体') : ratio>=0.9? L('Average luck','正常发挥') : ratio>=0.55? L('A bit unlucky','略显非气') : L('Certified unlucky','非洲酋长');
+    var badge=L('Luck ','欧皇指数 ')+'×'+ratio.toFixed(2)+' · '+luckTitle;
+    ctx.font='800 28px system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif';
+    var bw=ctx.measureText(badge).width+40, bx=W-M-bw, byy=116, bh=56;
+    rrPath(ctx,bx,byy,bw,bh,14); ctx.fillStyle='rgba(30,26,15,.94)'; ctx.fill(); ctx.strokeStyle='#e8b34d'; ctx.lineWidth=2; ctx.stroke();
+    ctx.fillStyle='#f3d48a'; ctx.textAlign='center'; ctx.fillText(badge, bx+bw/2, byy+37); ctx.textAlign='left';
+  }
+  if(hasBF){
+    var by=statsEnd+16, grad=ctx.createLinearGradient(M,0,W-M,0);
+    grad.addColorStop(0,'rgba(255,81,47,.32)'); grad.addColorStop(1,'rgba(221,36,118,.32)');
+    ctx.fillStyle=grad; ctx.fillRect(M,by,W-2*M,74);
+    ctx.strokeStyle='rgba(255,150,60,.9)'; ctx.lineWidth=2; ctx.strokeRect(M+.5,by+.5,W-2*M-1,73);
+    ctx.fillStyle='#ffe9d6'; ctx.font='900 36px system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif'; ctx.textAlign='center';
+    ctx.fillText(L('🔥 New Jersey BF secured!','🔥 新泽西 BF 已拿下！'), W/2, by+50); ctx.textAlign='left';
+  }
+  ctx.fillStyle='#e8b34d'; ctx.font='800 30px system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif';
+  ctx.fillText(L('Ships won','获得舰船')+' · '+ships.length, M, listHeadY);
+  ctx.font='25px system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif';
+  if(!shown.length){ ctx.fillStyle='#9db0c2'; ctx.fillText(L('No ships this run — better luck next time!','这次没出船 — 下次好运！'), M, listTop); }
+  shown.forEach(function(s,i){
+    var col=i%2, rowi=Math.floor(i/2), x=M+col*496, y=listTop+rowi*44;
+    ctx.fillStyle=grpColor(s.group); ctx.beginPath(); ctx.arc(x+8,y-8,7,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle='#e8eef3';
+    var nm=LANG==='zh'? (shipZhName(s)+(s.name&&shipZhName(s)!==s.name?' '+s.name:'')) : (s.name||'');
+    var full=nm+(s.tier?' · '+roman(s.tier):'');
+    if(LANG==='zh' && ctx.measureText(full).width>452) full=shipZhName(s)+(s.tier?' · '+roman(s.tier):'');
+    ctx.fillText(fitText(ctx, full, 452), x+26, y);
+  });
+  if(extra>0){ ctx.fillStyle='#9db0c2'; ctx.font='24px system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif'; ctx.fillText(L('… and '+extra+' more ships','…… 还有 '+extra+' 艘'), M, listTop+rows*44+6); }
+  var qr=qrcode(0,'M'); qr.addData(SITE_URL); qr.make();
+  var n=qr.getModuleCount(), cell=Math.max(2,Math.floor(196/n)), qsz=cell*n, qx=W-M-216+Math.floor((216-qsz)/2), qy=footerTop+Math.floor((216-qsz)/2);
+  ctx.fillStyle='#ffffff'; ctx.fillRect(W-M-216, footerTop, 216, 216);
+  ctx.fillStyle='#111111';
+  for(var rr=0;rr<n;rr++) for(var cc2=0;cc2<n;cc2++) if(qr.isDark(rr,cc2)) ctx.fillRect(qx+cc2*cell, qy+rr*cell, cell, cell);
+  ctx.fillStyle='#ffffff'; ctx.font='800 33px system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif';
+  ctx.fillText(L('Scan to try your luck','扫码试试你的手气'), M, footerTop+62);
+  ctx.fillStyle='#6fc3df'; ctx.font='25px ui-monospace,Menlo,monospace';
+  ctx.fillText('zhouxf53.github.io/wows-santa-simulator/en', M, footerTop+112);
+  ctx.fillStyle='#9db0c2'; ctx.font='21px system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif';
+  ctx.fillText(L('Rates from the official WG 15.11 closed-test blog · fan-made tool','概率来自 WG 官方 15.11 内测博客 · 非官方粉丝工具'), M, footerTop+158);
+  return cv;
+}
+function openShareCard(){
+  var cv=buildShareCard();
+  cv.toBlob(function(blob){
+    shareBlob=blob;
+    var url=URL.createObjectURL(blob);
+    document.getElementById('shareImg').src=url;
+    var dl=document.getElementById('shareDownload'); dl.href=url;
+    var nb=document.getElementById('shareNative');
+    var can=false;
+    try{ if(navigator.canShare&&blob){ var f=new File([blob],'wows-santa-report.png',{type:'image/png'}); can=navigator.canShare({files:[f]}); nb._file=f; } }catch(e){}
+    nb.hidden=!can;
+    document.getElementById('shareOverlay').hidden=false;
+  },'image/png');
+}
+document.getElementById('btnShare').addEventListener('click', openShareCard);
+document.getElementById('shareClose').addEventListener('click', function(){ document.getElementById('shareOverlay').hidden=true; });
+document.getElementById('shareOverlay').addEventListener('click', function(ev){ if(ev.target===this) this.hidden=true; });
+document.getElementById('shareNative').addEventListener('click', function(){ var f=this._file; if(f&&navigator.share){ navigator.share({files:[f], title:L('Santa container results','圣诞补给箱战报')}).catch(function(){}); } });
+
+loadConvoy(); syncConvoyChecks();
+loadManual(); buildManualPoolUI(); syncManualUI();
+applyLang();
+renderLoginPanel(); renderStateChips(); resetSession();
+(function(){ var handled=parseCallback(); if(!handled){ var u=loadSavedUser(); if(u) fetchPortAndPersonalize(u); } })();
+
+</script>
+</body>
+</html>
