@@ -274,6 +274,15 @@ details.how ul{margin:10px 0 4px;padding-left:18px;color:var(--muted);font-size:
 .pool-import-help{margin-top:8px;font-size:12.5px;color:var(--muted2)}
 .pool-import-help summary{cursor:pointer;font-weight:700;color:#cfe3f5}
 .pool-import-help code{display:block;margin-top:6px;background:#0a0f14;border:1px solid var(--line2);border-radius:8px;padding:8px 10px;font-size:11.5px;word-break:break-all;white-space:pre-wrap;color:var(--text)}
+.cn-modal-backdrop{position:fixed;inset:0;background:rgba(4,8,12,.78);z-index:10000;display:flex;align-items:flex-start;justify-content:center;padding:24px 14px;overflow:auto}
+.cn-modal-backdrop[hidden]{display:none}
+.cn-modal{background:var(--panel);border:1px solid var(--line2);border-radius:16px;max-width:560px;width:100%;padding:20px 20px 16px;position:relative;color:var(--text)}
+.cn-modal h3{margin:0 30px 6px 0;font-size:17px}
+.cn-modal-x{position:absolute;top:10px;right:12px;background:none;border:0;color:var(--muted2);font-size:17px;cursor:pointer;padding:4px}
+.cn-note{color:var(--gold);font-weight:700;font-size:13px;margin:4px 0 10px}
+.cn-steps{margin:0;padding-left:20px;display:grid;gap:13px;font-size:14px;line-height:1.55}
+.cn-bookmarklet{display:inline-block;margin-top:7px;background:var(--gold);color:#111;font-weight:900;padding:9px 15px;border-radius:999px;text-decoration:none;cursor:grab;font-size:14px}
+.cn-armory{display:inline-block;margin-top:7px}
 .btn-mini{padding:7px 11px;font-size:12.5px;border-radius:999px}
 .pool-group{margin-top:12px}
 .pool-group-head{display:flex;gap:7px;align-items:center;flex-wrap:wrap;margin-bottom:6px}
@@ -358,6 +367,7 @@ details.how ul{margin:10px 0 4px;padding-left:18px;color:var(--muted);font-size:
         <button class="btn-login" data-login-realm="eu" type="button">登录 · 欧洲</button>
         <button class="btn-login" data-login-realm="com" type="button">登录 · 北美</button>
         <button class="btn-login" data-login-realm="asia" type="button">登录 · 亚洲</button>
+        <button class="btn-login" id="btnCnSync" type="button">登录 · 国服（教程）</button>
         <span class="login-status" id="loginStatus"></span>
       </div>
       <div class="login-status" id="loginHint" style="margin-top:6px">登录后自动同步你的港口</div>
@@ -367,6 +377,19 @@ details.how ul{margin:10px 0 4px;padding-left:18px;color:var(--muted);font-size:
         <span class="login-status" id="loginStatusIn"></span>
       </div>
       <div class="login-error" id="loginError" hidden></div>
+    </div>
+    <div class="cn-modal-backdrop" id="cnModal" hidden>
+      <div class="cn-modal" role="dialog" aria-modal="true" aria-labelledby="cnModalTitle">
+        <button class="cn-modal-x" id="cnModalClose" type="button" aria-label="关闭">✕</button>
+        <h3 id="cnModalTitle">国服船池同步（教程）</h3>
+        <p class="cn-note" id="cnModalNote">⚠ 仅电脑浏览器可用 — 手机用户请用下方「手动设置船池」逐艘勾选。</p>
+        <ol class="cn-steps">
+          <li><span id="cnStep1">把这个按钮拖到浏览器的书签栏（只需做一次）：</span><br><a class="cn-bookmarklet" id="cnBookmarklet" href="javascript:(function(){try{var u='https://zhouxf53.github.io/wows-santa-simulator/';var w=window.open(u,'_blank');fetch(metashop.settings.urls.accountInventoryVrtx,{credentials:'include'}).then(function(r){return r.json()}).then(function(d){var ids=(d&&d.data&&d.data.ships)?d.data.ships:[];if(!ids.length){alert('没有读到船只列表，请确认已登录军械库');return}if(w){w.location=u+'#ids='+ids.join(',')}else{alert('弹窗被浏览器拦截，请允许弹窗后重试')}}).catch(function(e){alert('读取失败，请确认当前页面是军械库且已登录')})}catch(e){alert('请在军械库页面（登录状态）点击这个书签')}})()">🎄 同步我的船池</a><div class="hint" id="cnStep1b" style="margin-top:6px">看不到书签栏？按 Ctrl+Shift+B 显示。</div></li>
+          <li><span id="cnStep2">打开国服军械库网页，并确认已登录你的国服账号：</span><br><a class="btn-sec btn-mini cn-armory" id="cnArmoryLink" href="https://armory.wowsgame.cn/" target="_blank" rel="noopener">打开国服军械库 ↗</a></li>
+          <li><span id="cnStep3">在军械库页面点一下书签栏里的「🎄 同步我的船池」— 会自动打开模拟器，船池已经按你的港口同步好。</span></li>
+        </ol>
+        <p class="hint" id="cnModalPrivacy" style="margin:12px 0 0">原理：这个书签只在军械库页面内读取你自己的船只列表，ID 只经网址 # 片段在你自己的浏览器标签页之间传递，不经过任何服务器。</p>
+      </div>
     </div>
   </header>
 
@@ -883,6 +906,20 @@ function importPoolIds(){
   saveManual(); syncManualUI(); resetSession();
   if(msg) msg.textContent=L('Imported: '+matched.length+' Santa-pool ships marked as owned ('+(ids.length-matched.length)+' other IDs ignored).','导入完成：'+matched.length+' 艘圣诞池舰船已标记为拥有（另有 '+(ids.length-matched.length)+' 个 ID 不在池中，已忽略）。');
 }
+function importFromHash(){
+  var m=(location.hash||'').match(/ids=([0-9,]+)/); if(!m) return;
+  try{ history.replaceState(null,'',location.pathname+location.search); }catch(e){}
+  if(typeof currentUser!=='undefined' && currentUser) return; /* WG port takes over */
+  var ids=parseShipIdTokens(m[1]); var set=poolIdSet(); var matched=[];
+  ids.forEach(function(id){ if(set[id]) matched.push(id); });
+  if(!matched.length) return;
+  manualOwn={}; matched.forEach(function(id){ manualOwn[id]=true; });
+  saveManual(); syncManualUI(); resetSession();
+  var ta=document.getElementById('poolImportText'); if(ta) ta.value='['+matched.join(',')+']';
+  var msg=document.getElementById('poolImportMsg'); if(msg) msg.textContent=L('Synced from the Armory: '+matched.length+' Santa-pool ships marked as owned ('+(ids.length-matched.length)+' other IDs ignored).','已从军械库同步：'+matched.length+' 艘圣诞池舰船已标记为拥有（另有 '+(ids.length-matched.length)+' 个 ID 不在池中，已忽略）。');
+  var f=document.getElementById('poolFold'); if(f) f.open=true;
+}
+window.addEventListener('hashchange', importFromHash);
 var MANUAL_GROUPS=[['rare',function(){return FULL_RARE}],['mid',function(){return FULL_MID}],['common',function(){return FULL_COMMON}]];
 function buildManualPoolUI(){
   var wrap=document.getElementById('poolGroups'); if(!wrap) return;
@@ -1275,6 +1312,16 @@ function applyLang(){
   setT('poolImportHelpTitle', L('How do I get my ship IDs? (Armory, CN / WG)','怎么获取船只 ID？（国服 / 国际服军械库）'));
   setT('poolImportHelpTxt', L('Log in to the Armory web page (CN: armory.wowsgame.cn; WG: armory.worldofwarships.com etc.), press F12 to open the console, paste the line below and press Enter — the console prints the ID array of all your ships and copies it to your clipboard. Come back here, paste it into the box above and hit Import. Importing replaces the current ticks.','登录军械库网页（国服 armory.wowsgame.cn，国际服 armory.worldofwarships.com 等），按 F12 打开控制台，粘贴下面这一行回车，控制台会打印你全部船只的 ID 数组并自动复制到剪贴板 — 回到这里粘贴到上面的框里点导入即可。导入会覆盖当前勾选。'));
   var pit=document.getElementById('poolImportText'); if(pit) pit.setAttribute('placeholder', L('Paste a ship ID list (the Armory ID array, or any text containing the IDs)…','粘贴船只 ID 列表导入（军械库导出的 ID 数组，或任意包含 ID 的文本）…'));
+  setT('btnCnSync', L('Login · CN server (guide)','登录 · 国服（教程）'));
+  setT('cnModalTitle', L('Sync your CN-server fleet (guide)','国服船池同步（教程）'));
+  setT('cnModalNote', L('⚠ Desktop browsers only — on mobile, please tick your ships in "Set your fleet manually" below.','⚠ 仅电脑浏览器可用 — 手机用户请用下方「手动设置船池」逐艘勾选。'));
+  setT('cnStep1', L('Drag this button onto your browser\'s bookmarks bar (one-time setup):','把这个按钮拖到浏览器的书签栏（只需做一次）：'));
+  setT('cnStep1b', L('No bookmarks bar? Press Ctrl+Shift+B to show it.','看不到书签栏？按 Ctrl+Shift+B 显示。'));
+  setT('cnStep2', L('Open the CN-server Armory and make sure you are logged in to your CN account:','打开国服军械库网页，并确认已登录你的国服账号：'));
+  setT('cnArmoryLink', L('Open the CN Armory ↗','打开国服军械库 ↗'));
+  setT('cnStep3', L('On the Armory page, click "🎄 Sync my fleet" in the bookmarks bar — the simulator opens with your fleet already synced.','在军械库页面点一下书签栏里的「🎄 同步我的船池」— 会自动打开模拟器，船池已经按你的港口同步好。'));
+  setT('cnBookmarklet', L('🎄 Sync my fleet','🎄 同步我的船池'));
+  setT('cnModalPrivacy', L('How it works: the bookmark reads your own ship list inside the Armory page only; the IDs travel between your own browser tabs in the URL # fragment and never pass through any server.','原理：这个书签只在军械库页面内读取你自己的船只列表，ID 只经网址 # 片段在你自己的浏览器标签页之间传递，不经过任何服务器。'));
   setT('poolCollapseBtn', L('Collapse ▴','收起 ▴'));
   var pse=document.getElementById('poolSearch'); if(pse) pse.setAttribute('placeholder', L('Search ships (Chinese / English)…','搜索船名（中文 / 英文）…'));
   if(typeof syncManualLang==='function') syncManualLang();
@@ -1426,11 +1473,18 @@ document.getElementById('shareClose').addEventListener('click', function(){ docu
 document.getElementById('shareOverlay').addEventListener('click', function(ev){ if(ev.target===this) this.hidden=true; });
 document.getElementById('shareNative').addEventListener('click', function(){ var f=this._file; if(f&&navigator.share){ navigator.share({files:[f], title:L('Santa container results','圣诞补给箱战报')}).catch(function(){}); } });
 
+document.getElementById('btnCnSync').addEventListener('click', function(){ document.getElementById('cnModal').hidden=false; });
+document.getElementById('cnModalClose').addEventListener('click', function(){ document.getElementById('cnModal').hidden=true; });
+document.getElementById('cnModal').addEventListener('click', function(ev){ if(ev.target===this) this.hidden=true; });
+document.addEventListener('keydown', function(ev){ if(ev.key==='Escape'){ var cm=document.getElementById('cnModal'); if(cm) cm.hidden=true; } });
+document.getElementById('cnBookmarklet').addEventListener('click', function(ev){ ev.preventDefault(); });
+
 loadConvoy(); syncConvoyChecks();
 loadManual(); buildManualPoolUI(); syncManualUI();
 applyLang();
 renderLoginPanel(); renderStateChips(); resetSession();
 (function(){ var handled=parseCallback(); if(!handled){ var u=loadSavedUser(); if(u) fetchPortAndPersonalize(u); } })();
+importFromHash();
 
 </script>
 </body>
