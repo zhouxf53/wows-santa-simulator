@@ -427,8 +427,8 @@ details.how ul{margin:10px 0 4px;padding-left:18px;color:var(--muted);font-size:
           </div>
           <details class="pool-import-help">
             <summary id="poolImportHelpTitle">怎么获取船只 ID？（国服 / 国际服军械库）</summary>
-            <p class="hint" id="poolImportHelpTxt" style="margin:6px 0 0">登录军械库网页（国服 armory.wowsgame.cn，国际服 armory.worldofwarships.com 等），按 F12 打开控制台，粘贴下面这一行回车，控制台会打印你全部船只的 ID 数组 — 复制后粘贴到上面的框里点导入。导入会覆盖当前勾选。</p>
-            <code>fetch(metashop.settings.urls.accountInventoryVrtx,{credentials:'include'}).then(r=>r.json()).then(d=>console.log(JSON.stringify(d.data.ships)))</code>
+            <p class="hint" id="poolImportHelpTxt" style="margin:6px 0 0">登录军械库网页（国服 armory.wowsgame.cn，国际服 armory.worldofwarships.com 等），按 F12 打开控制台，粘贴下面这一行回车，控制台会打印你全部船只的 ID 数组并自动复制到剪贴板 — 回到这里粘贴到上面的框里点导入即可。导入会覆盖当前勾选。</p>
+            <code>fetch(metashop.settings.urls.accountInventoryVrtx,{credentials:'include'}).then(r=>r.json()).then(d=>{var s=JSON.stringify(d.data.ships);console.log(s);try{copy(s)}catch(e){}})</code>
           </details>
         </div>
         <div id="poolGroups"></div>
@@ -1273,7 +1273,7 @@ function applyLang(){
   setT('poolClearAll', L('Clear all','清空全部'));
   setT('poolImportBtn', L('Import IDs','导入 ID'));
   setT('poolImportHelpTitle', L('How do I get my ship IDs? (Armory, CN / WG)','怎么获取船只 ID？（国服 / 国际服军械库）'));
-  setT('poolImportHelpTxt', L('Log in to the Armory web page (CN: armory.wowsgame.cn; WG: armory.worldofwarships.com etc.), press F12 to open the console, paste the line below and press Enter — the console prints the ID array of all your ships. Copy it into the box above and hit Import. Importing replaces the current ticks.','登录军械库网页（国服 armory.wowsgame.cn，国际服 armory.worldofwarships.com 等），按 F12 打开控制台，粘贴下面这一行回车，控制台会打印你全部船只的 ID 数组 — 复制后粘贴到上面的框里点导入。导入会覆盖当前勾选。'));
+  setT('poolImportHelpTxt', L('Log in to the Armory web page (CN: armory.wowsgame.cn; WG: armory.worldofwarships.com etc.), press F12 to open the console, paste the line below and press Enter — the console prints the ID array of all your ships and copies it to your clipboard. Come back here, paste it into the box above and hit Import. Importing replaces the current ticks.','登录军械库网页（国服 armory.wowsgame.cn，国际服 armory.worldofwarships.com 等），按 F12 打开控制台，粘贴下面这一行回车，控制台会打印你全部船只的 ID 数组并自动复制到剪贴板 — 回到这里粘贴到上面的框里点导入即可。导入会覆盖当前勾选。'));
   var pit=document.getElementById('poolImportText'); if(pit) pit.setAttribute('placeholder', L('Paste a ship ID list (the Armory ID array, or any text containing the IDs)…','粘贴船只 ID 列表导入（军械库导出的 ID 数组，或任意包含 ID 的文本）…'));
   setT('poolCollapseBtn', L('Collapse ▴','收起 ▴'));
   var pse=document.getElementById('poolSearch'); if(pse) pse.setAttribute('placeholder', L('Search ships (Chinese / English)…','搜索船名（中文 / 英文）…'));
