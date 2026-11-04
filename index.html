@@ -266,6 +266,14 @@ details.how ul{margin:10px 0 4px;padding-left:18px;color:var(--muted);font-size:
 .pool-tools{display:flex;gap:8px;margin:10px 0 2px;flex-wrap:wrap}
 .pool-tools input[type=search]{flex:1 1 180px;min-width:0;background:#0a0f14;border:1px solid var(--line2);border-radius:999px;color:var(--text);padding:8px 13px;font-size:13px}
 .pool-tools input[type=search]::placeholder{color:var(--muted)}
+.pool-import{margin-top:10px}
+.pool-import textarea{width:100%;box-sizing:border-box;background:#0a0f14;border:1px solid var(--line2);border-radius:10px;color:var(--text);padding:8px 11px;font-size:12.5px;font-family:ui-monospace,Menlo,Consolas,monospace;resize:vertical}
+.pool-import textarea::placeholder{color:var(--muted)}
+.pool-import-row{display:flex;gap:10px;align-items:center;margin-top:7px;flex-wrap:wrap}
+.pool-import-msg{font-size:12.5px;color:var(--gold);font-weight:700}
+.pool-import-help{margin-top:8px;font-size:12.5px;color:var(--muted2)}
+.pool-import-help summary{cursor:pointer;font-weight:700;color:#cfe3f5}
+.pool-import-help code{display:block;margin-top:6px;background:#0a0f14;border:1px solid var(--line2);border-radius:8px;padding:8px 10px;font-size:11.5px;word-break:break-all;white-space:pre-wrap;color:var(--text)}
 .btn-mini{padding:7px 11px;font-size:12.5px;border-radius:999px}
 .pool-group{margin-top:12px}
 .pool-group-head{display:flex;gap:7px;align-items:center;flex-wrap:wrap;margin-bottom:6px}
@@ -410,6 +418,18 @@ details.how ul{margin:10px 0 4px;padding-left:18px;color:var(--muted);font-size:
         <div class="pool-tools">
           <input type="search" id="poolSearch" placeholder="搜索船名（中文 / 英文）…">
           <button class="btn-sec btn-mini" id="poolClearAll" type="button">清空全部</button>
+        </div>
+        <div class="pool-import">
+          <textarea id="poolImportText" rows="3" placeholder="粘贴船只 ID 列表导入（军械库导出的 ID 数组，或任意包含 ID 的文本）…"></textarea>
+          <div class="pool-import-row">
+            <button class="btn-sec btn-mini" id="poolImportBtn" type="button">导入 ID</button>
+            <span class="pool-import-msg" id="poolImportMsg"></span>
+          </div>
+          <details class="pool-import-help">
+            <summary id="poolImportHelpTitle">怎么获取船只 ID？（国服 / 国际服军械库）</summary>
+            <p class="hint" id="poolImportHelpTxt" style="margin:6px 0 0">登录军械库网页（国服 armory.wowsgame.cn，国际服 armory.worldofwarships.com 等），按 F12 打开控制台，粘贴下面这一行回车，控制台会打印你全部船只的 ID 数组 — 复制后粘贴到上面的框里点导入。导入会覆盖当前勾选。</p>
+            <code>fetch(metashop.settings.urls.accountInventoryVrtx,{credentials:'include'}).then(r=>r.json()).then(d=>console.log(JSON.stringify(d.data.ships)))</code>
+          </details>
         </div>
         <div id="poolGroups"></div>
         <div style="text-align:right;margin-top:12px"><button class="btn-sec btn-mini" id="poolCollapseBtn" type="button">收起 ▴</button></div>
@@ -849,6 +869,20 @@ var manualOwn={};
 function loadManual(){ try{ var j=JSON.parse(localStorage.getItem(MANUAL_KEY)||'{}'); Object.keys(j).forEach(function(k){ if(j[k]) manualOwn[k]=true; }); }catch(e){} }
 function saveManual(){ try{ localStorage.setItem(MANUAL_KEY, JSON.stringify(manualOwn)); }catch(e){} }
 function manualCount(){ return Object.keys(manualOwn).length; }
+var POOL_ID_SET=null;
+function poolIdSet(){ if(!POOL_ID_SET){ POOL_ID_SET={}; FULL_RARE.concat(FULL_MID,FULL_COMMON).forEach(function(s){ POOL_ID_SET[String(s[2])]=true; }); } return POOL_ID_SET; }
+function parseShipIdTokens(text){ var seen={}, out=[]; String(text||'').split(/\D+/).forEach(function(tok){ if(/^\d{10}$/.test(tok) && !seen[tok]){ seen[tok]=true; out.push(tok); } }); return out; }
+function importPoolIds(){
+  var ta=document.getElementById('poolImportText'); if(!ta) return;
+  var msg=document.getElementById('poolImportMsg');
+  var ids=parseShipIdTokens(ta.value); var set=poolIdSet(); var matched=[];
+  ids.forEach(function(id){ if(set[id]) matched.push(id); });
+  if(!ids.length){ if(msg) msg.textContent=L('No ship IDs found — paste the ID list from the Armory first.','没识别到船只 ID — 请先粘贴军械库导出的 ID 列表。'); return; }
+  if(!matched.length){ if(msg) msg.textContent=L('Found '+ids.length+' IDs, but none are in the Santa pool.','识别到 '+ids.length+' 个 ID，但都不在圣诞船池里。'); return; }
+  manualOwn={}; matched.forEach(function(id){ manualOwn[id]=true; });
+  saveManual(); syncManualUI(); resetSession();
+  if(msg) msg.textContent=L('Imported: '+matched.length+' Santa-pool ships marked as owned ('+(ids.length-matched.length)+' other IDs ignored).','导入完成：'+matched.length+' 艘圣诞池舰船已标记为拥有（另有 '+(ids.length-matched.length)+' 个 ID 不在池中，已忽略）。');
+}
 var MANUAL_GROUPS=[['rare',function(){return FULL_RARE}],['mid',function(){return FULL_MID}],['common',function(){return FULL_COMMON}]];
 function buildManualPoolUI(){
   var wrap=document.getElementById('poolGroups'); if(!wrap) return;
@@ -867,6 +901,7 @@ function buildManualPoolUI(){
   var ca=document.getElementById('poolClearAll'); if(ca) ca.addEventListener('click',function(){ manualOwn={}; document.querySelectorAll('.mpChk').forEach(function(c){ c.checked=false; }); saveManual(); updateManualCounts(); resetSession(); });
   var ps=document.getElementById('poolSearch'); if(ps) ps.addEventListener('input',function(){ var q=(ps.value||'').trim().toLowerCase(); document.querySelectorAll('.pool-item').forEach(function(it){ it.style.display=(!q || (it.getAttribute('data-name')||'').indexOf(q)>=0)? '' : 'none'; }); document.querySelectorAll('.pool-group').forEach(function(gr){ var any=false; gr.querySelectorAll('.pool-item').forEach(function(it){ if(it.style.display!=='none') any=true; }); gr.style.display=any? '' : 'none'; }); });
   var cb=document.getElementById('poolCollapseBtn'); if(cb) cb.addEventListener('click',function(){ var f=document.getElementById('poolFold'); if(f){ f.open=false; f.scrollIntoView({block:'nearest'}); } });
+  var ib=document.getElementById('poolImportBtn'); if(ib) ib.addEventListener('click', importPoolIds);
 }
 function updateManualCounts(){
   var fc=document.getElementById('poolFoldCount'); if(fc) fc.textContent=L('Ticked ','已勾选 ')+manualCount()+' / 143';
@@ -880,6 +915,8 @@ function syncManualAvailability(){
   document.querySelectorAll('.mpChk,.mp-all,.mp-none').forEach(function(el){ el.disabled=dis; });
   var ca=document.getElementById('poolClearAll'); if(ca) ca.disabled=dis;
   var ps=document.getElementById('poolSearch'); if(ps) ps.disabled=dis;
+  var it=document.getElementById('poolImportText'); if(it) it.disabled=dis;
+  var ib2=document.getElementById('poolImportBtn'); if(ib2) ib2.disabled=dis;
 }
 function syncManualLang(){
   document.querySelectorAll('.mp-glabel').forEach(function(el){ var g=el.closest('.pool-group').getAttribute('data-group'); el.textContent=grpLabel(g); });
@@ -1234,6 +1271,10 @@ function applyLang(){
   setT('poolFoldHint', L('Can\'t sync by logging in (e.g. CN-server players)? Tick the ships you already own here — the sim treats them as owned, so they won\'t drop. Ticks are saved on this device; when logged in, your port takes over. Changing a tick resets the session.','无法登录同步（比如国服玩家）时，在这里勾选你已经拥有的船 — 模拟时按已拥有处理，不会掉落。勾选会自动保存在本机；登录后以港口为准。修改勾选会重置当前模拟。'));
   setT('poolFoldNote', L('Logged in · using your port','已登录 · 以港口为准'));
   setT('poolClearAll', L('Clear all','清空全部'));
+  setT('poolImportBtn', L('Import IDs','导入 ID'));
+  setT('poolImportHelpTitle', L('How do I get my ship IDs? (Armory, CN / WG)','怎么获取船只 ID？（国服 / 国际服军械库）'));
+  setT('poolImportHelpTxt', L('Log in to the Armory web page (CN: armory.wowsgame.cn; WG: armory.worldofwarships.com etc.), press F12 to open the console, paste the line below and press Enter — the console prints the ID array of all your ships. Copy it into the box above and hit Import. Importing replaces the current ticks.','登录军械库网页（国服 armory.wowsgame.cn，国际服 armory.worldofwarships.com 等），按 F12 打开控制台，粘贴下面这一行回车，控制台会打印你全部船只的 ID 数组 — 复制后粘贴到上面的框里点导入。导入会覆盖当前勾选。'));
+  var pit=document.getElementById('poolImportText'); if(pit) pit.setAttribute('placeholder', L('Paste a ship ID list (the Armory ID array, or any text containing the IDs)…','粘贴船只 ID 列表导入（军械库导出的 ID 数组，或任意包含 ID 的文本）…'));
   setT('poolCollapseBtn', L('Collapse ▴','收起 ▴'));
   var pse=document.getElementById('poolSearch'); if(pse) pse.setAttribute('placeholder', L('Search ships (Chinese / English)…','搜索船名（中文 / 英文）…'));
   if(typeof syncManualLang==='function') syncManualLang();
